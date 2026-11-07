@@ -1,12 +1,12 @@
 # MCQ Lens shared service
 
-Live student app: **https://mcq-lens.pages.dev**. The Cloudflare Worker handles `/api/*` behind a Pages gateway. Students use private access links, never provider API keys. No payment method was added and no paid service or paid model fallback was activated during setup.
+Live student app: **https://mcq-lens.pages.dev**. The Cloudflare Worker handles `/api/*` behind a Pages gateway. No access link is needed for now: each browser/extension sends a random install ID that keys its allowance. Users may add their own provider keys in the extension's Settings. No payment method was added and no paid service or paid model fallback was activated during setup.
 
 ## Owner access
 
-Private student links live in `.local/student-invites.csv`. Each identity gets **50 successful questions per UTC day**, including cached answers and extension scans. Use one identity per student. Links expire after 30 days; regenerating links preserves student IDs and does not reset their usage. These links grant account access: do not publish the CSV. The first link is also in `.local/start.html` for easy opening.
+Access links are off for now; old private links in `.local/student-invites.csv` still work but are optional. Each identity (signed link or anonymous install ID) gets **50 successful questions per UTC day**, including cached answers and extension scans. Use one identity per student. Links expire after 30 days; regenerating links preserves student IDs and does not reset their usage. These links grant account access: do not publish the CSV. The first link is also in `.local/start.html` for easy opening.
 
-The root Chrome extension's Settings accepts a complete student link. It requests access only to that service origin. Provider keys stay in Cloudflare Worker secrets. Personal-key mode remains available for backward compatibility.
+The root Chrome extension talks to https://mcq-lens.pages.dev with no setup. Owner provider keys stay in Cloudflare Worker secrets. A user's own keys arrive as `X-Groq-Key` / `X-Gemini-Key` / `X-Zai-Key` headers, replace the owner keys for that request, use their own quota pool and skip the 50/day cap; they are never stored or logged.
 
 ## Providers and zero-payment behavior
 

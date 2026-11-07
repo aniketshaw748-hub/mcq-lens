@@ -1,43 +1,40 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { makeRequest, parseResult, solve } from '../solver.js';
+import { solve, SERVICE_URL } from '../solver.js';
 
-const result = questions => ({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: JSON.stringify({ questions }) }] } }] });
-const question = { question: '2 + 2?', explanation: 'Adding gives four.', confidence: 'high', answers: [{ text: '4', box: [100, 200, 150, 350] }] };
-test('request includes screenshot and constrains the answer schema', () => {
-  const request = makeRequest('image-data');
-  assert.equal(request.contents[0].parts[1].inlineData.data, 'image-data');
-  assert.equal(request.generationConfig.responseMimeType, 'application/json');
-  assert.ok(request.systemInstruction.parts[0].text.includes('untrusted'));
-});
-test('accepts valid answers and refuses unsafe box coordinates', () => {
-  assert.deepEqual(parseResult(result([question])), [question]);
-  const invalid = [[-1, 0, 200, 200], [0, 0, 1001, 200], [100, 0, 50, 200], [0, 0, 20], [0, 0, 0, 20]];
-  for (const box of invalid) assert.deepEqual(parseResult(result([{ ...question, answers: [{ text: '4', box }] }]))[0].answers, []);
-});
-test('refuses blocked, truncated, and malformed responses', () => {
-  assert.throws(() => parseResult({ candidates: [] }));
-  assert.throws(() => parseResult({ candidates: [{ finishReason: 'MAX_TOKENS' }] }));
-  assert.throws(() => parseResult(result([{ ...question, confidence: 'certain' }])));
-});
-test('supports no question and unanswered questions', () => {
-  assert.deepEqual(parseResult(result([])), []);
-  assert.deepEqual(parseResult(result([{ ...question, answers: [] }]))[0].answers, []);
-});
-test('rejects an option list passed off as answers to a single-answer question', () => {
-  const answers = Array.from({ length: 4 }, (_, i) => ({ text: `Option ${i}`, box: [i * 100, 0, i * 100 + 50, 500] }));
-  assert.throws(() => parseResult(result([{ ...question, answers }])), /multiple options/);
-  assert.throws(() => parseResult(result([{ ...question, selectionMode: 'multiple', answers }])), /multiple options/);
-  assert.equal(parseResult(result([{ ...question, question: 'Select all that apply: which are prime?', selectionMode: 'multiple', answers: answers.slice(0, 2) }]))[0].answers.length, 2);
-});
-test('quota errors are identified and the key travels only in a header', async () => {
+const ok = questions => ({ ok: true, json: async () => ({ questions }) });
+test('works with no setup: calls the MCQ Lens service with only an install ID', async () => {
   const original = globalThis.fetch;
   try {
     globalThis.fetch = async (url, request) => {
-      assert.ok(!url.includes('secret'));
-      assert.equal(request.headers['x-goog-api-key'], 'secret');
-      return { ok: false, status: 429 };
+      assert.equal(url, `${SERVICE_URL}/api/answer`);
+      assert.deepEqual(Object.keys(request.headers).sort(), ['Content-Type', 'X-Client-Id']);
+      assert.equal(request.headers['X-Client-Id'], 'install-1');
+      assert.equal(JSON.parse(request.body).image, 'image');
+      return ok([]);
     };
-    await assert.rejects(solve({ apiKey: 'secret' }, 'image'), error => error.status === 429 && error.message.includes('60 seconds'));
+    assert.deepEqual(await solve({ clientId: 'install-1' }, 'image'), []);
+  } finally { globalThis.fetch = original; }
+});
+test('own keys travel only in headers; a pre-1.2 Gemini key still works; page text skips the image', async () => {
+  const original = globalThis.fetch;
+  try {
+    globalThis.fetch = async (url, request) => {
+      assert.ok(!url.includes('secret') && !request.body.includes('secret'));
+      assert.equal(request.headers['X-Groq-Key'], 'groq-secret');
+      assert.equal(request.headers['X-Gemini-Key'], 'old-gemini-secret');
+      assert.equal(request.headers['X-Zai-Key'], undefined);
+      const body = JSON.parse(request.body);
+      assert.equal(body.image, undefined); assert.equal(body.extractedQuestions.length, 1);
+      return ok([{ answers: [] }]);
+    };
+    assert.equal((await solve({ clientId: 'i', groqKey: 'groq-secret', apiKey: 'old-gemini-secret' }, 'image', undefined, [{ question: 'q' }])).length, 1);
+  } finally { globalThis.fetch = original; }
+});
+test('service errors keep their message and retry time', async () => {
+  const original = globalThis.fetch;
+  try {
+    globalThis.fetch = async () => ({ ok: false, status: 429, json: async () => ({ error: 'Scan limit reached.', retryMs: 9000 }) });
+    await assert.rejects(solve({ clientId: 'i' }, 'image'), error => error.status === 429 && error.retryMs === 9000 && error.message === 'Scan limit reached.');
   } finally { globalThis.fetch = original; }
 });

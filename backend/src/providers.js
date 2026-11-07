@@ -21,12 +21,14 @@ export function routes(env, input) {
   return all;
 }
 export function quotaLimits(env, name) {
+  // A user's own keys are limited only by their provider; its 429s still trigger the cooldown.
+  if (env.KEY_POOL) return { rpm: 1e9, rpd: 1e9, tpm: 1e12, tpd: 1e12, concurrent: 8 };
   const overrides = JSON.parse(env.PROVIDER_LIMITS || '{}');
   return { ...DEFAULT_LIMITS[name], ...overrides[name] };
 }
 export async function requestProvider(env, provider, body, signal) {
   if (signal?.aborted) throw new Error('Request was cancelled before provider admission.');
-  const quota = env.QUOTA.getByName(`provider:${provider.name}`);
+  const quota = env.QUOTA.getByName(`provider:${provider.name}${env.KEY_POOL ? `:${env.KEY_POOL}` : ''}`);
   const maxOutput = body.max_tokens || body.generationConfig?.maxOutputTokens || Number(env.MAX_OUTPUT_TOKENS || 1800);
   const serialized = JSON.stringify(body, (key, value) => key === 'data' || (typeof value === 'string' && value.startsWith('data:image/')) ? '' : value);
   const hasImage = JSON.stringify(body).includes('image/jpeg');
@@ -65,7 +67,7 @@ export async function solveWith(env, provider, input, signal) {
       else body.tools = [{ code_execution: {} }];
     }
     let searchLease;
-    const searchQuota = env.QUOTA.getByName('provider:search');
+    const searchQuota = env.QUOTA.getByName(`provider:search${env.KEY_POOL ? `:${env.KEY_POOL}` : ''}`);
     if (input.webSearch) {
       searchLease = await searchQuota.reserve({ limits: quotaLimits(env, 'search'), clock: 'pacific' });
       if (!searchLease.id) throw Object.assign(new Error('Search allowance exhausted.'), { retryMs: searchLease.retryMs });

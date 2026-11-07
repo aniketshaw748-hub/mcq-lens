@@ -22,28 +22,28 @@ try {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto(`chrome-extension://${id}/options.html`);
-  await page.locator('summary').click();
-  await page.locator('#key').fill('test-key-not-real');
+  assert.equal(await page.locator('#access-link').count(), 0);
+  await page.locator('#groq').fill('gsk_test-key-not-real');
   await page.locator('#interval').fill('8');
-  await page.getByRole('button', { name: 'Save personal key' }).click();
+  await page.getByRole('button', { name: 'Save keys' }).click();
   await page.getByRole('status').filter({ hasText: 'Saved.' }).waitFor();
   await page.getByRole('button', { name: 'Save check interval' }).click();
-  const settings = await page.evaluate(() => chrome.storage.local.get(['apiKey', 'interval']));
-  assert.equal(settings.apiKey, 'test-key-not-real'); assert.equal(settings.interval, 8);
-  await page.getByRole('button', { name: 'Show', exact: true }).click();
-  assert.equal(await page.locator('#key').getAttribute('type'), 'text');
-  await page.getByRole('button', { name: 'Delete saved key' }).click();
-  assert.equal((await page.evaluate(() => chrome.storage.local.get('apiKey'))).apiKey, undefined);
-  console.log('PASS real unpacked extension loads; settings save, reveal, delete');
+  const settings = await page.evaluate(() => chrome.storage.local.get(['groqKey', 'geminiKey', 'interval']));
+  assert.equal(settings.groqKey, 'gsk_test-key-not-real'); assert.equal(settings.geminiKey, undefined); assert.equal(settings.interval, 8);
+  await page.getByRole('button', { name: 'Show keys' }).click();
+  assert.equal(await page.locator('#groq').getAttribute('type'), 'text');
+  await page.screenshot({ path: path.join(extension, 'test-results/settings.png'), fullPage: true });
+  await page.getByRole('button', { name: 'Delete saved keys' }).click();
+  assert.equal((await page.evaluate(() => chrome.storage.local.get('groqKey'))).groqKey, undefined);
+  console.log('PASS real unpacked extension loads with no access link; own keys save, reveal, delete');
   // Exercise the packaged module from an extension page; service workers
   // support static imports but prohibit dynamic import().
   const workerResult = await page.evaluate(async () => {
-    const { parseResult } = await import(chrome.runtime.getURL('solver.js'));
-    return parseResult({ candidates: [{ finishReason: 'STOP', content: { parts: [{ text: '{"questions":[]}' }] } }] });
+    const { SERVICE_URL } = await import(chrome.runtime.getURL('solver.js'));
+    return SERVICE_URL;
   });
-  assert.deepEqual(workerResult, []);
+  assert.equal(workerResult, 'https://mcq-lens.pages.dev');
   assert.equal(await worker.evaluate(() => chrome.runtime.getManifest().manifest_version), 3);
-  await page.screenshot({ path: path.join(extension, 'test-results/settings.png') });
   assert.deepEqual(errors, []);
   console.log('PASS Manifest V3 worker and solver load without browser errors');
 } finally { await context.close(); }

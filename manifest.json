@@ -1,13 +1,24 @@
 {
   "manifest_version": 3,
   "name": "MCQ Lens",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Watch a question on your current tab and highlight AI-suggested answers as it changes.",
   "minimum_chrome_version": "116",
-  "permissions": ["activeTab", "scripting", "storage"],
-  "host_permissions": ["https://generativelanguage.googleapis.com/*"],
-  "optional_host_permissions": ["https://*/*", "http://127.0.0.1/*"],
-  "background": { "service_worker": "background.js", "type": "module" },
-  "action": { "default_popup": "popup.html", "default_title": "MCQ Lens" },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://mcq-lens.pages.dev/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "MCQ Lens"
+  },
   "options_page": "options.html"
 }

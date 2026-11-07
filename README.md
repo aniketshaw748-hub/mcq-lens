@@ -2,16 +2,14 @@
 
 Shared study app: https://mcq-lens.pages.dev
 
-The Chrome extension now supports the owner's shared AI service. Students need a private access link, not provider accounts or API keys. The earlier personal Gemini-key mode remains optional.
+The Chrome extension now supports the owner's shared AI service. It works straight after install: no access link, account or API key. Settings has an optional place for a user's own Groq, Gemini or Z.ai keys; with any of them, that user's questions run on their keys only, with no MCQ Lens daily cap.
 
 ## Install the extension
 
 1. Extract the extension zip, or use this source folder directly.
 2. Open chrome://extensions, enable Developer mode, and choose Load unpacked.
 3. Select the folder containing manifest.json (C:\Coding\MCQ-Lens for the local source).
-4. Open extension Settings and paste your complete private student link.
-5. Allow the requested access to that study-service origin.
-6. Open a question tab, enable MCQ Lens, and choose an area around the question and ALL options.
+4. Open a question tab, enable MCQ Lens, and choose an area around the question and ALL options.
 
 Only enabled tabs are scanned. Hidden tabs and unfocused windows pause. Reloading or navigating switches scanning off. Scroll removes old highlights and rescans; resize resets the selected area. The shared service reads complete radio-button questions directly from visible page text when possible, including code and all options. This skips the vision provider. Other layouts and image/canvas questions use screenshot reading. Requests are sent only when the selected image changes. Timers and animations may cause extra scans, so keep them outside the selected area. The interval defaults to 10 seconds and is configurable from 6–60 seconds.
 
@@ -19,13 +17,13 @@ The shared service permits 50 successful questions per student per UTC day. Ever
 
 ## Owner setup
 
-The shared backend source and deployment instructions are in backend/README.md. Private student access links are in backend/.local/student-invites.csv; backend/.local/start.html opens the first student's link. These are access credentials: keep them private. Neither file is included in public deployments or deliverable zips.
+The shared backend source and deployment instructions are in backend/README.md. Access links are switched off for now (the server accepts requests without them); the old private links in backend/.local/ still work but are not needed. Neither file is included in public deployments or deliverable zips.
 
 Provider keys live in Cloudflare Worker secrets and the local ignored backend/.dev.vars. They are not distributed in this extension. Z.ai free Flash models, Groq GPT-OSS models and Gemini are configured. Gemini supplies web search for the separate study-question page; the screen-scanning extension does not search the web.
 
 ## Privacy and correctness
 
-While enabled, readable question/option text goes to the owner's server and its text model. If the extension cannot reliably extract a complete question, screenshot crops go to the server and its configured vision provider (Z.ai or Gemini). Personal-key mode sends screenshots directly to Google. Crop out personal data. The application processes raw screenshots in memory. Answers may be cached for 24 hours, or 5 minutes for search-backed answers. Provider-side processing follows provider terms, including free-tier terms. The extension stores its student access code locally in the Chrome profile, not Chrome Sync.
+While enabled, readable question/option text goes to the owner's server and its text model. If the extension cannot reliably extract a complete question, screenshot crops go to the server and its configured vision provider (Gemini, Groq or Z.ai). Own keys from Settings are sent as request headers to the server, used for that request only and never stored there. Crop out personal data. The application processes raw screenshots in memory. Answers may be cached for 24 hours, or 5 minutes for search-backed answers. Provider-side processing follows provider terms, including free-tier terms. The extension stores a random install ID and any own keys locally in the Chrome profile, not Chrome Sync.
 
 Green marks a high-confidence AI suggestion; amber marks uncertainty. Confidence is the model's subjective judgment. The panel gives the option text and explanation. Highlight placement uses the actual page option when its text matches the answer. For image-only questions, boxes depend on the model's estimated coordinates and can be imprecise. All question text and options must be readable and visible. Answers can be wrong.
 

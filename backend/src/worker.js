@@ -12,6 +12,16 @@ async function anonymousId(request) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(request.headers.get('cf-connecting-ip') || 'unknown'));
   return `ip-${Array.from(new Uint8Array(digest).slice(0, 12), x => x.toString(16).padStart(2, '0')).join('')}`;
 }
+// Keys a user adds in the extension's Settings replace the owner's keys for that request only.
+// They are never stored or logged, and get their own provider quota pool.
+async function withUserKeys(request, env) {
+  const keys = Object.fromEntries([['GROQ_API_KEY', 'x-groq-key'], ['GEMINI_API_KEY', 'x-gemini-key'], ['ZAI_API_KEY', 'x-zai-key']]
+    .map(([name, header]) => [name, request.headers.get(header)]).filter(([, value]) => /^[!-~]{10,300}$/.test(value || '')));
+  if (!Object.keys(keys).length) return env;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(keys)));
+  return { ...env, GROQ_API_KEY: keys.GROQ_API_KEY, GEMINI_API_KEY: keys.GEMINI_API_KEY, ZAI_API_KEY: keys.ZAI_API_KEY, KEY_POOL: Array.from(new Uint8Array(digest).slice(0, 16), x => x.toString(16).padStart(2, '0')).join('') };
+}
+const OWN_KEY_LIMITS = { rpm: 60, rpd: 1e9, tpm: 1e9, tpd: 1e9, concurrent: 1 };
 const json = (data, status = 200, extra = {}) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store', ...extra } });
 async function bodyJSON(request) {
   const reader = request.body?.getReader();
@@ -35,7 +45,7 @@ export default {
     const extensionOrigin = /^chrome-extension:\/\/[a-p]{32}$/.test(origin || '');
     const allowed = !origin || origin === url.origin || extensionOrigin || (env.ALLOWED_ORIGINS || '').split(',').includes(origin);
     if (!allowed) return json({ error: 'Origin is not allowed.' }, 403);
-    const cors = origin ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin', 'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Client-Id', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' } : {};
+    const cors = origin ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin', 'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Client-Id, X-Groq-Key, X-Gemini-Key, X-Zai-Key', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' } : {};
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     const respond = (data, status = 200, headers = {}) => json(data, status, { ...cors, ...headers });
     if (url.pathname === '/api/visit' && request.method === 'POST') {
@@ -64,9 +74,10 @@ export default {
       if (!input.question && !input.image) throw new Error('Enter a question or attach an image.');
       if (input.mode === 'mcq' && ((!input.image && !input.extractedQuestions) || input.webSearch)) throw new Error('Screen scanning requires readable page questions or an image and does not use search.');
     } catch (error) { return respond({ error: error.message || 'Invalid request.' }, 400); }
-    const providers = routes(env, input);
+    const providerEnv = await withUserKeys(request, env);
+    const providers = routes(providerEnv, input);
     if (!providers.length) return respond({ error: input.webSearch ? 'Web search needs the owner’s free-tier Gemini key. No search request was sent.' : 'The owner has not connected a provider for this question type yet.' }, 503);
-    const lease = await quota.reserve({ limits: STUDENT_LIMITS, ttl: 90000, category: input.mode, replace: input.mode === 'mcq' });
+    const lease = await quota.reserve({ limits: providerEnv.KEY_POOL ? OWN_KEY_LIMITS : STUDENT_LIMITS, ttl: 90000, category: input.mode, replace: input.mode === 'mcq' });
     if (!lease.id) return respond({ error: lease.exhausted ? 'Your 50-question daily allowance is used. It resets at midnight UTC.' : lease.reason === 'busy' ? 'Your study answer is still running. This question will retry shortly.' : `Scan limit reached. Retrying in ${Math.ceil(lease.retryMs / 1000)} seconds.`, retryMs: lease.exhausted ? 0 : lease.retryMs, reason: lease.reason }, 429, { 'Retry-After': String(Math.ceil(lease.retryMs / 1000)) });
     let success = false;
     let finished = false, cancellationTimer;
@@ -94,7 +105,7 @@ export default {
         if (signal.aborted) break;
         const provider = providers[(start + i) % providers.length];
         try {
-          const result = input.mode === 'mcq' ? await solveMCQ(env, input, signal) : await solveWith(env, provider, input, signal);
+          const result = input.mode === 'mcq' ? await solveMCQ(providerEnv, input, signal) : await solveWith(providerEnv, provider, input, signal);
           if (superseded.signal.aborted || !await quota.active(lease.id)) return respond({ error: 'A newer question replaced this scan.', retryMs: 0, reason: 'superseded' }, 409);
           const ttl = input.webSearch ? 300 : 86400;
           ctx.waitUntil(caches.default.put(cacheKey, new Response(JSON.stringify(result), { headers: { 'Cache-Control': `public, max-age=${ttl}`, 'Content-Type': 'application/json' } })));

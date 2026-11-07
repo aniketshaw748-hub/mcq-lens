@@ -25,8 +25,9 @@ async function handle(message, sender) {
     return { image };
   }
   if (typeof message.image !== 'string' || message.image.length > 12000000) throw new Error('Invalid screenshot.');
-  const settings = await chrome.storage.local.get(['apiKey', 'model', 'backendURL', 'studentToken']);
-  if (!(settings.backendURL && settings.studentToken) && !settings.apiKey) throw new Error('Connect your student access link in Settings first.');
+  const settings = await chrome.storage.local.get(['clientId', 'groqKey', 'geminiKey', 'zaiKey', 'apiKey']);
+  // A random install ID keeps this browser's daily allowance; no account or link is needed.
+  if (!settings.clientId) { settings.clientId = crypto.randomUUID(); await chrome.storage.local.set({ clientId: settings.clientId }); }
   const remaining = (lastRequest.get(tab.id) || 0) - Date.now();
   if (remaining > 0) return { error: 'Waiting before the next request.', retryMs: remaining };
   jobs.get(tab.id)?.abort();

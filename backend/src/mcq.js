@@ -51,9 +51,10 @@ function jsonFromGemini(data) {
   if (candidate?.finishReason !== 'STOP') throw new Error('Transcription did not finish.');
   return JSON.parse(candidate.content?.parts?.filter(x => !x.thought).map(x => x.text || '').join('') || '');
 }
-function stageFailure(stage, failures) {
+function stageFailure(stage, failures, ownKeys) {
   const daily = failures.length && failures.every(error => error.reason === 'daily');
-  const error = new Error(stage === 'reading'
+  const rejected = ownKeys && failures.some(error => [401, 403].includes(error.upstreamStatus));
+  const error = new Error(rejected ? 'A provider rejected its API key. Check the keys in MCQ Lens Settings.' : stage === 'reading'
     ? daily ? 'The free screenshot-reading allowance is used for today. Text-page reading can still work with the latest extension.' : 'Screenshot reading is unavailable right now. Try the latest extension’s page-text reading, or retry later.'
     : daily ? 'The free answer providers have reached their daily allowance. Try after the provider limits reset.' : 'The answer providers could not produce a valid answer right now. Please retry later.');
   return Object.assign(error, { stage, reason: daily ? 'daily' : 'provider_unavailable', retryMs: Math.min(...failures.map(x => x.retryMs || 60000), 3600000) });
@@ -90,7 +91,7 @@ export async function solveMCQ(env, input, signal) {
       questions = validateExtraction(data); reader = provider.name; break;
     } catch (error) { if (signal?.aborted) throw new Error('Screenshot scan timed out.'); readingFailures.push(error); reportFailure('reading', provider, error); }
   }
-  if (!questions) throw stageFailure('reading', readingFailures);
+  if (!questions) throw stageFailure('reading', readingFailures, Boolean(env.KEY_POOL));
   if (!questions.length) return { questions: [], provider: reader, pipeline: 'read-then-solve' };
   const solvers = routes(env, { image: '', webSearch: false });
   const order = ['groq120', 'groq20', 'zai', 'gemini'];
@@ -115,5 +116,5 @@ export async function solveMCQ(env, input, signal) {
       return { questions: result, provider: provider.name.startsWith('groq') ? 'Groq' : provider.name === 'zai' ? 'Z.ai' : 'Gemini', model: provider.model, reader, pipeline: 'read-then-solve' };
     } catch (error) { if (signal?.aborted) throw new Error('Screenshot reasoning timed out.'); solvingFailures.push(error); reportFailure('solving', provider, error); }
   }
-  throw stageFailure('solving', solvingFailures);
+  throw stageFailure('solving', solvingFailures, Boolean(env.KEY_POOL));
 }

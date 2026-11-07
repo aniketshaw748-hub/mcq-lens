@@ -18,8 +18,7 @@ $('settings').onclick = () => chrome.runtime.openOptionsPage();
 $('toggle').onclick = async () => {
   $('toggle').disabled = true;
   try {
-    const settings = await chrome.storage.local.get(['apiKey', 'interval', 'backendURL', 'studentToken']);
-    if (!(settings.backendURL && settings.studentToken) && !settings.apiKey) { await chrome.runtime.openOptionsPage(); return; }
+    const settings = await chrome.storage.local.get(['interval']);
     if (!/^https?:/.test(tab.url || '')) throw new Error('Open a regular website first. Chrome system pages and PDFs are not supported.');
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
     await send('TOGGLE', { enabled: !enabled, interval: settings.interval || 10 });
