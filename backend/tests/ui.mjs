@@ -1,20 +1,15 @@
 import { chromium } from '../../node_modules/playwright/index.mjs';
-import { readFile, mkdir } from 'node:fs/promises';
-import { signAccess } from '../src/auth.js';
+import { mkdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const config = await readFile('.dev.vars', 'utf8');
-const secret = config.match(/^ACCESS_SECRET=(.+)$/m)?.[1].trim();
 const base = process.argv[2] || 'http://127.0.0.1:8787';
-const token = await signAccess(secret, `browser-qa-${Date.now()}`, Date.now() + 3600000);
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const errors = [];
 try {
   const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto(`${base}/#access=${token}`);
-  await page.waitForFunction(() => document.querySelector('#status').textContent.includes('Connected.'));
-  assert.equal(await page.locator('#access-form').isVisible(), false);
-  assert.equal(new URL(page.url()).hash, '');
+  await page.goto(base);
+  await page.waitForFunction(() => document.querySelector('#status').textContent.includes('Ready.'));
+  assert.equal(await page.locator('#access').count(), 0);
   await page.locator('#question').fill('Solve 3x + 7 = 22. Show the steps. Use LaTeX for the equations.');
   await page.getByRole('button', { name: 'Explain this question' }).click();
   await page.locator('#answer').waitFor({ state: 'visible', timeout: 75000 });
@@ -23,7 +18,7 @@ try {
   assert.match(await page.locator('#allowance').textContent(), /49 of 50/);
   await mkdir('test-results', { recursive: true });
   await page.screenshot({ path: 'test-results/study.png', fullPage: true });
-  console.log('PASS student link, no API-key setup, fresh math answer, rendered equations, quota display');
+  console.log('PASS no access link, no API-key setup, fresh math answer, rendered equations, quota display');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.screenshot({ path: 'test-results/mobile.png', fullPage: true });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));

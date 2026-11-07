@@ -32,7 +32,11 @@ try {
   assert.equal(limited.reason, 'rate');
   assert.ok(limited.retryMs > 1000 && limited.retryMs <= 60000);
   console.log('PASS distinct busy/rate reasons, accurate retry times, and enforced 12-scan/minute admission');
-  assert.equal((await mf.dispatchFetch('http://localhost/api/answer', { method: 'POST', body: '{}' })).status, 401);
+  const anonymous = await mf.dispatchFetch('http://localhost/api/answer', { method: 'POST', headers: { 'X-Client-Id': 'install-abc12345' }, body: JSON.stringify({ question: 'Explain an anonymous concept' }) });
+  assert.equal(anonymous.status, 200);
+  assert.equal((await mf.dispatchFetch('http://localhost/api/me', { headers: { 'X-Client-Id': 'install-abc12345' } }).then(r => r.json())).used, 1);
+  assert.equal((await mf.dispatchFetch('http://localhost/api/provider-status')).status, 403);
+  console.log('PASS no access link needed; anonymous install ID keeps its own allowance; owner diagnostics stay private');
   const reservations = await Promise.all(Array.from({ length: 70 }, () => mf.dispatchFetch('http://localhost/test/reserve', { method: 'POST', body: JSON.stringify({ name: 'student:race', limits: { rpm: 1000, rpd: 50, tpm: 1e9, tpd: 1e9, concurrent: 100 } }) }).then(r => r.json())));
   assert.equal(reservations.filter(x => x.id).length, 50);
   console.log('PASS real Durable Object atomically enforces 50 daily questions under 70 simultaneous reservations');

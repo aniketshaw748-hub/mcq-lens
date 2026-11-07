@@ -1,13 +1,11 @@
 import { marked } from './vendor/marked.esm.js';
 const $ = id => document.getElementById(id);
 fetch(`/api/visit?src=${encodeURIComponent(new URLSearchParams(location.search).get('src') || 'direct')}`, { method: 'POST' }).catch(() => {});
-let token = sessionStorage.getItem('mcq-access') || '', busy = false;
-const fragment = new URLSearchParams(location.hash.slice(1));
-if (fragment.has('access')) { token = fragment.get('access'); history.replaceState(null, '', location.pathname); sessionStorage.setItem('mcq-access', token); }
-$('access').value = token;
+let busy = false, clientId;
+try { clientId = localStorage.getItem('mcq-client') || crypto.randomUUID(); localStorage.setItem('mcq-client', clientId); } catch { clientId = crypto.randomUUID(); }
 const status = text => { $('status').textContent = text; };
 async function call(path, options = {}) {
-  const response = await fetch(path, { ...options, headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}), ...(options.body ? { 'Content-Type': 'application/json' } : {}) } });
+  const response = await fetch(path, { ...options, headers: { 'X-Client-Id': clientId, ...(options.body ? { 'Content-Type': 'application/json' } : {}) } });
   const data = await response.json();
   if (!response.ok) throw Object.assign(new Error(data.error || 'Request failed.'), { retryMs: data.retryMs });
   return data;
@@ -15,10 +13,9 @@ async function call(path, options = {}) {
 async function connect() {
   try {
     const me = await call('/api/me'); $('allowance').textContent = `${Math.max(0, me.dailyLimit - me.used)} of ${me.dailyLimit} questions left today`;
-    $('access-form').hidden = true; status('Connected. Ask your next question.'); return true;
-  } catch (error) { $('access-form').hidden = false; status(error.message); return false; }
+    status('Ready. Ask your question.'); return true;
+  } catch (error) { status(error.message); return false; }
 }
-$('access-form').onsubmit = async event => { event.preventDefault(); token = $('access').value.trim(); sessionStorage.setItem('mcq-access', token); await connect(); };
 $('image').onchange = () => { $('filename').textContent = $('image').files[0]?.name || ''; $('clear-image').hidden = !$('image').files.length; };
 $('clear-image').onclick = () => { $('image').value = ''; $('filename').textContent = ''; $('clear-image').hidden = true; };
 async function readImage(file) {
@@ -54,7 +51,6 @@ function show(data) {
 }
 $('question-form').onsubmit = async event => {
   event.preventDefault(); if (busy) return;
-  if (!token) { status('Open your student access link first.'); $('access').focus(); return; }
   const question = $('question').value.trim(), file = $('image').files[0];
   if (!question && !file) { status('Enter a question or attach an image.'); $('question').focus(); return; }
   busy = true; $('ask').disabled = true; $('answer').hidden = true;
@@ -77,5 +73,5 @@ $('question-form').onsubmit = async event => {
 };
 call('/api/health').then(health => {
   if (!health.ready) status('The service is set up, but the owner still needs to connect a free AI provider.');
-  else if (token) connect(); else status('Open your student access link to get started.');
+  else connect();
 }).catch(() => status('Could not reach the study service. Try reloading.'));

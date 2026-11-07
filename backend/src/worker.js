@@ -4,6 +4,14 @@ import { solveMCQ, validateExtraction } from './mcq.js';
 export { Quota } from './quota.js';
 
 const STUDENT_LIMITS = { rpm: 12, rpd: 50, tpm: 1e9, tpd: 1e9, concurrent: 1 };
+// Open access: no student link is needed. Each browser/extension sends a random install ID so the
+// per-person allowance still works; a hashed IP is the fallback.
+async function anonymousId(request) {
+  const client = request.headers.get('x-client-id');
+  if (/^[a-zA-Z0-9-]{8,80}$/.test(client || '')) return `anon-${client}`;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(request.headers.get('cf-connecting-ip') || 'unknown'));
+  return `ip-${Array.from(new Uint8Array(digest).slice(0, 12), x => x.toString(16).padStart(2, '0')).join('')}`;
+}
 const json = (data, status = 200, extra = {}) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store', ...extra } });
 async function bodyJSON(request) {
   const reader = request.body?.getReader();
@@ -27,7 +35,7 @@ export default {
     const extensionOrigin = /^chrome-extension:\/\/[a-p]{32}$/.test(origin || '');
     const allowed = !origin || origin === url.origin || extensionOrigin || (env.ALLOWED_ORIGINS || '').split(',').includes(origin);
     if (!allowed) return json({ error: 'Origin is not allowed.' }, 403);
-    const cors = origin ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin', 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' } : {};
+    const cors = origin ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin', 'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Client-Id', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' } : {};
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
     const respond = (data, status = 200, headers = {}) => json(data, status, { ...cors, ...headers });
     if (url.pathname === '/api/visit' && request.method === 'POST') {
@@ -37,13 +45,13 @@ export default {
     }
     if (url.pathname === '/api/health') return respond({ ready: Boolean(env.ACCESS_SECRET && (env.ZAI_API_KEY || env.GROQ_API_KEY || env.GEMINI_API_KEY)), configured: { zai: Boolean(env.ZAI_API_KEY), groq: Boolean(env.GROQ_API_KEY), gemini: Boolean(env.GEMINI_API_KEY) }, capacityVerified: false });
     const token = request.headers.get('authorization')?.replace(/^Bearer /i, '');
-    const student = await verifyAccess(env.ACCESS_SECRET, token);
-    if (!student) return respond({ error: 'Open your student access link or enter your access code.' }, 401);
+    const verified = await verifyAccess(env.ACCESS_SECRET, token);
     if (url.pathname === '/api/provider-status' && request.method === 'GET') {
-      if (student !== 'owner-diagnostics') return respond({ error: 'Owner access required.' }, 403);
+      if (verified !== 'owner-diagnostics') return respond({ error: 'Owner access required.' }, 403);
       const status = await Promise.all(Object.keys(DEFAULT_LIMITS).map(async name => [name, await env.QUOTA.getByName(`provider:${name}`).status(quotaLimits(env, name), name === 'gemini' || name === 'search' ? 'pacific' : 'utc')]));
       return respond({ providers: Object.fromEntries(status) });
     }
+    const student = verified || await anonymousId(request);
     const quota = env.QUOTA.getByName(`student:${student}`);
     if (url.pathname === '/api/me' && request.method === 'GET') return respond({ student, used: (await quota.usage()).requests, dailyLimit: 50 });
     if (url.pathname !== '/api/answer' || request.method !== 'POST') return respond({ error: 'Route not found.' }, 404);
