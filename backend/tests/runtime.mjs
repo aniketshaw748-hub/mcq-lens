@@ -4,7 +4,7 @@ import { signAccess } from '../src/auth.js';
 import assert from 'node:assert/strict';
 await build({ entryPoints: ['tests/runtime-entry.js'], bundle: true, format: 'esm', platform: 'browser', external: ['cloudflare:workers'], outfile: '.local/runtime-test.mjs' });
 const seenKeys = [];
-const mf = new Miniflare(convertV4MiniflareOptions({ modules: true, scriptPath: '.local/runtime-test.mjs', compatibilityDate: '2026-11-07', durableObjects: { QUOTA: { className: 'Quota', useSQLite: true } }, bindings: { ACCESS_SECRET: 'test-owner', GROQ_API_KEY: 'not-real', PROVIDER_LIMITS: JSON.stringify({ groq120: { rpm: 1000, rpd: 10000, tpm: 10000000, tpd: 100000000, concurrent: 100 }, groq20: { rpm: 1000, rpd: 10000, tpm: 10000000, tpd: 100000000, concurrent: 100 } }) }, outboundService: async request => {
+const mf = new Miniflare(convertV4MiniflareOptions({ modules: true, scriptPath: '.local/runtime-test.mjs', compatibilityDate: '2026-11-07', durableObjects: { QUOTA: { className: 'Quota', useSQLite: true }, REPORTS: { className: 'Reports', useSQLite: true } }, bindings: { ACCESS_SECRET: 'test-owner', GROQ_API_KEY: 'not-real', PROVIDER_LIMITS: JSON.stringify({ groq120: { rpm: 1000, rpd: 10000, tpm: 10000000, tpd: 100000000, concurrent: 100 }, groq20: { rpm: 1000, rpd: 10000, tpm: 10000000, tpd: 100000000, concurrent: 100 } }) }, outboundService: async request => {
   seenKeys.push(request.headers.get('authorization'));
   const body = await request.json();
   assert.equal(body.messages.length, 2);
@@ -57,6 +57,20 @@ try {
   assert.ok(seenKeys.length >= 55 && seenKeys.every(key => key === 'Bearer user-groq-key-123'));
   assert.equal((await quotaCall('usage', { name: 'provider:groq120' })).requests, ownerBefore);
   console.log('PASS own keys from Settings are used instead of the owner keys, skip the 50/day cap and leave the owner quota untouched');
+  const report = body => mf.dispatchFetch('http://localhost/api/report', { method: 'POST', headers: { 'X-Client-Id': 'install-reporter1' }, body: JSON.stringify(body) });
+  const auto = { kind: 'auto', version: '1.2.3', site: 'quiz.example.edu', stage: 'reading', reason: 'provider_unavailable', events: [{ t: 10, type: 'scan', detail: 'screenshot' }] };
+  assert.equal((await report({ ...auto, message: 'Screenshot reading failed after 12034 ms' })).status, 200);
+  assert.equal((await report({ ...auto, message: 'Screenshot reading failed after 9 ms', screenshot: 'aGVsbG8=' })).status, 200);
+  assert.equal((await report({ kind: 'user' })).status, 400);
+  const ownerToken = await signAccess('test-owner', 'owner-diagnostics', Date.now() + 60000);
+  assert.equal((await mf.dispatchFetch('http://localhost/api/reports')).status, 403);
+  const groups = (await mf.dispatchFetch('http://localhost/api/reports', { headers: { Authorization: `Bearer ${ownerToken}` } }).then(r => r.json())).groups;
+  assert.equal(groups.length, 1); assert.equal(groups[0].count, 2); assert.equal(groups[0].users, 1);
+  const latest = (await mf.dispatchFetch(`http://localhost/api/reports?id=${groups[0].latest}`, { headers: { Authorization: `Bearer ${ownerToken}` } }).then(r => r.json())).report;
+  assert.equal(latest.screenshot, 'aGVsbG8='); assert.equal(latest.events[0].type, 'scan'); assert.equal(latest.site, 'quiz.example.edu');
+  for (let i = 0; i < 9; i++) await report({ ...auto, message: `flood ${i}` });
+  assert.equal((await report({ ...auto, message: 'one too many' })).status, 429);
+  console.log('PASS bug reports are stored, grouped by error type across numbers, owner-only to read, keep an attached screenshot, and are rate-limited');
   const invalid = await signAccess('test-owner', 'student-malformed', Date.now() + 60000);
   const invalidResult = await mf.dispatchFetch('http://localhost/api/answer', { method: 'POST', headers: { Authorization: `Bearer ${invalid}` }, body: JSON.stringify({ question: 42 }) });
   assert.equal(invalidResult.status, 400);

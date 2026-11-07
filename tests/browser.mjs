@@ -17,12 +17,13 @@ try {
     const canvas = document.createElement('canvas'); canvas.width = 1100; canvas.height = 800;
     const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 1100, 800);
     window.image1 = canvas.toDataURL(); ctx.fillStyle = 'black'; ctx.fillRect(50, 50, 900, 80); window.image2 = canvas.toDataURL(); ctx.fillStyle = 'blue'; ctx.fillRect(50, 300, 900, 300); window.image3 = canvas.toDataURL();
-    window.calls = []; window.listeners = []; window.delay = 0; window.failure = null;
+    window.calls = []; window.reports = []; window.listeners = []; window.delay = 0; window.failure = null;
     window.chrome = { runtime: {
       onMessage: { addListener(fn) { window.listeners.push(fn); } },
       async sendMessage(message) {
         window.calls.push(message.type);
         if (message.type === 'CAPTURE') return window.unfocused ? { paused: true } : { image: window.imageOverride || (document.querySelector('#q').textContent.includes('capital') ? window.image2 : document.querySelector('#q').textContent.includes('appeared') ? window.image3 : window.image1) };
+        if (message.type === 'REPORT') { window.reports.push(message.report); return { received: true, id: window.reports.length }; }
         if (message.type === 'SOLVE') {
           const question = document.querySelector('#q').textContent;
           if (window.delay) await new Promise(resolve => setTimeout(resolve, window.delay));
@@ -98,13 +99,32 @@ try {
   console.log('PASS stale question response rejected');
   await page.evaluate(() => window.dispatchExtension({ type: 'TOGGLE', enabled: false }));
 
-  await page.evaluate(() => { window.delay = 0; window.failure = { error: 'API quota reached. Paused for 60 seconds', retryMs: 60000 }; window.dispatchExtension({ type: 'TOGGLE', enabled: true, interval: 6 }); });
+  await page.evaluate(() => { window.delay = 0; window.failure = { error: 'Screenshot reading is unavailable right now.', reason: 'provider_unavailable', stage: 'reading', retryMs: 6000 }; window.dispatchExtension({ type: 'TOGGLE', enabled: true, interval: 6 }); });
+  await waitStatus('unavailable right now');
+  await page.waitForFunction(() => window.reports.length === 1);
+  const autoReport = await page.evaluate(() => window.reports[0]);
+  assert.equal(autoReport.kind, 'auto'); assert.equal(autoReport.stage, 'reading'); assert.equal(autoReport.site, '');
+  assert.ok(autoReport.events.some(e => e.type === 'ask') && autoReport.events.some(e => e.type === 'error'));
+  assert.ok(!/capital|France|2 \+ 2|appeared/.test(JSON.stringify(autoReport)));
+  console.log('PASS a real error sends an automatic report with the extension steps and no question text');
+
+  await page.evaluate(() => { window.testRoots[0].querySelector('#report').click(); window.testRoots[0].querySelector('#note').value = 'Highlighted the wrong option'; window.testRoots[0].querySelector('#shot').checked = true; window.testRoots[0].querySelector('#send').click(); });
+  await waitStatus('report #2 sent');
+  const userReport = await page.evaluate(() => window.reports[1]);
+  assert.equal(userReport.kind, 'user'); assert.equal(userReport.note, 'Highlighted the wrong option'); assert.ok(userReport.screenshot.length > 1000);
+  await page.evaluate(() => { window.testRoots[0].querySelector('#report').click(); window.testRoots[0].querySelector('#note').value = 'No screenshot please'; window.testRoots[0].querySelector('#send').click(); });
+  await waitStatus('report #3 sent');
+  assert.equal(await page.evaluate(() => window.reports[2].screenshot), '');
+  console.log('PASS Report a problem sends the note, and a screenshot only when ticked');
+  await page.evaluate(() => window.dispatchExtension({ type: 'TOGGLE', enabled: false }));
+
+  await page.evaluate(() => { window.delay = 0; window.failure = { error: 'API quota reached. Paused for 60 seconds', reason: 'daily', retryMs: 60000 }; window.dispatchExtension({ type: 'TOGGLE', enabled: true, interval: 6 }); });
   await waitStatus('quota reached');
   const quotaCalls = await page.evaluate(() => window.calls.filter(x => x === 'SOLVE').length);
   await page.waitForTimeout(6500);
   assert.equal(await page.evaluate(() => window.calls.filter(x => x === 'SOLVE').length), quotaCalls);
-  assert.equal(await boxCount(), 0);
-  console.log('PASS quota error pauses requests');
+  assert.equal(await boxCount(), 0); assert.equal(await page.evaluate(() => window.reports.length), 3);
+  console.log('PASS quota error pauses requests and is not reported as a bug');
   assert.deepEqual(errors, []);
   console.log('PASS no browser runtime errors');
 } finally { await browser.close(); }

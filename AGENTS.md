@@ -12,5 +12,6 @@
 - Page-text extraction must include the actual question plus code/data and every option. A fieldset legend such as "Choose one answer" describes controls and is not the question. Refuse clipped options or image/canvas content and fall back to screenshot reading.
 - Screenshot MCQs must use backend/src/mcq.js (transcription → reasoning → validated option indices), never the generic vision study solver. Reject multiple selections for a single-answer question. Latest MCQ work supersedes obsolete MCQ leases; student rate admission is 12/minute and the successful daily allowance remains 50.
 - When simulating extension injection with Playwright addScriptTag on the hosted app, use a test browser context with bypassCSP enabled; the real extension's isolated-world injection is not subject to page CSP. Never weaken the deployed CSP for this test harness.
+- Bug reports: read with `node scripts/reports.mjs` in backend (`--list`, `--id N`). Reports must never carry question text, page content or keys; screenshots only from the user-ticked "Report a problem" box.
 - Assets are vendored by `npm run assets` in backend; run this after `npm ci`. Pages assets must be rebuilt with `scripts/pages.mjs` after frontend changes.
 - Source zip uses a positive file allowlist. Run `scripts/check-packages.mjs` from backend before archiving or sharing either zip.

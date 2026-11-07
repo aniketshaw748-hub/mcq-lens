@@ -1,5 +1,6 @@
 import worker from '../src/worker.js';
 export { Quota } from '../src/quota.js';
+export { Reports } from '../src/reports.js';
 export default {
   fetch(request, env, ctx) {
     if (new URL(request.url).pathname === '/test/reserve') return request.json().then(async args => Response.json(await env.QUOTA.getByName(args.name).reserve(args)));

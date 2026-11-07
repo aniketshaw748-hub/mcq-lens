@@ -13,6 +13,14 @@ export async function solve(settings, image, signal, extractedQuestions) {
     body: JSON.stringify({ question: 'Solve the visible multiple-choice questions.', ...(extractedQuestions?.length ? { extractedQuestions } : { image }), mode: 'mcq' }), signal
   });
   const data = await response.json();
-  if (!response.ok) throw Object.assign(new Error(data.error || 'Study service unavailable.'), { status: response.status, retryMs: data.retryMs });
+  if (!response.ok) throw Object.assign(new Error(data.error || 'Study service unavailable.'), { status: response.status, retryMs: data.retryMs, reason: data.reason, stage: data.stage });
   return data.questions || [];
+}
+
+// Bug report: the extension's own steps and the error, plus a screenshot only if the user attached one.
+export async function sendReport(settings, report) {
+  const response = await fetch(`${SERVICE_URL}/api/report`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Client-Id': settings.clientId }, body: JSON.stringify(report) });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || `Report failed (${response.status}).`);
+  return data;
 }

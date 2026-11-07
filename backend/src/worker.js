@@ -1,7 +1,9 @@
 import { verifyAccess } from './auth.js';
 import { routes, solveWith, DEFAULT_LIMITS, quotaLimits } from './providers.js';
 import { solveMCQ, validateExtraction } from './mcq.js';
+import { validateReport } from './reports.js';
 export { Quota } from './quota.js';
+export { Reports } from './reports.js';
 
 const STUDENT_LIMITS = { rpm: 12, rpd: 50, tpm: 1e9, tpd: 1e9, concurrent: 1 };
 // Open access: no student link is needed. Each browser/extension sends a random install ID so the
@@ -21,6 +23,7 @@ async function withUserKeys(request, env) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(keys)));
   return { ...env, GROQ_API_KEY: keys.GROQ_API_KEY, GEMINI_API_KEY: keys.GEMINI_API_KEY, ZAI_API_KEY: keys.ZAI_API_KEY, KEY_POOL: Array.from(new Uint8Array(digest).slice(0, 16), x => x.toString(16).padStart(2, '0')).join('') };
 }
+const REPORT_LIMITS = { rpm: 10, rpd: 100, tpm: 1e9, tpd: 1e9, concurrent: 100 };
 const OWN_KEY_LIMITS = { rpm: 60, rpd: 1e9, tpm: 1e9, tpd: 1e9, concurrent: 1 };
 const json = (data, status = 200, extra = {}) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store', ...extra } });
 async function bodyJSON(request) {
@@ -61,7 +64,21 @@ export default {
       const status = await Promise.all(Object.keys(DEFAULT_LIMITS).map(async name => [name, await env.QUOTA.getByName(`provider:${name}`).status(quotaLimits(env, name), name === 'gemini' || name === 'search' ? 'pacific' : 'utc')]));
       return respond({ providers: Object.fromEntries(status) });
     }
+    if (url.pathname === '/api/reports' && request.method === 'GET') {
+      if (verified !== 'owner-diagnostics') return respond({ error: 'Owner access required.' }, 403);
+      const store = env.REPORTS.getByName('all'), id = Number(url.searchParams.get('id'));
+      if (id) return respond({ report: await store.get(id) });
+      if (url.searchParams.has('list')) return respond({ reports: await store.list(url.searchParams.get('signature') || '', Math.min(100, Number(url.searchParams.get('limit')) || 20)) });
+      return respond({ groups: await store.summary() });
+    }
     const student = verified || await anonymousId(request);
+    if (url.pathname === '/api/report' && request.method === 'POST') {
+      let report;
+      try { report = validateReport(await bodyJSON(request)); } catch (error) { return respond({ error: error.message || 'Invalid report.' }, 400); }
+      const lease = await env.QUOTA.getByName(`reports:${student}`).reserve({ limits: REPORT_LIMITS, ttl: 1 });
+      if (!lease.id) return respond({ error: 'Too many reports from this browser. Try again later.', retryMs: lease.retryMs }, 429);
+      return respond({ received: true, id: await env.REPORTS.getByName('all').add(report, student) });
+    }
     const quota = env.QUOTA.getByName(`student:${student}`);
     if (url.pathname === '/api/me' && request.method === 'GET') return respond({ student, used: (await quota.usage()).requests, dailyLimit: 50 });
     if (url.pathname !== '/api/answer' || request.method !== 'POST') return respond({ error: 'Route not found.' }, 404);

@@ -9,10 +9,16 @@
   const root = host.attachShadow({ mode: 'closed' });
   root.innerHTML = `<style>
     :host{font:13px/1.45 'Segoe UI',sans-serif;color:#242c26}.hud{position:fixed;right:18px;bottom:18px;max-width:340px;background:#f6f5ee;color:#242c26;border:1px solid #d9ddd2;border-radius:13px;padding:13px 15px;box-shadow:0 6px 30px #0002;pointer-events:auto;font:13px/1.45 'Segoe UI',sans-serif}
-    .top{display:flex;gap:12px;align-items:center;justify-content:space-between}.name{font-weight:700}.status{margin-top:6px;font-size:12px;color:#616b62}.buttons{display:flex;gap:6px;margin-top:10px}button{font:12px 'Segoe UI',sans-serif;border:1px solid #cbd3c4;background:transparent;border-radius:6px;padding:5px 8px;cursor:pointer;color:#315e3a}button:hover{background:#e2f2a7}button:focus-visible{outline:2px solid #315e3a}.box{position:fixed;box-sizing:border-box;border:3px solid #38753a;border-radius:6px;background:#b8ec7438;pointer-events:none}.box.low{border-color:#b07b1e;background:#efbd5430}.box span{position:absolute;top:-21px;left:0;background:#315e3a;color:white;padding:2px 6px;border-radius:4px;white-space:nowrap;font:11px 'Segoe UI',sans-serif}.box.low span{background:#94621b}.reason{max-height:200px;overflow:auto;margin-top:8px;font-size:12px}.reason p{margin:7px 0}.region{position:fixed;box-sizing:border-box;border:1px dashed #315e3a;pointer-events:none}.veil{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;background:#0004;touch-action:none}.selection{position:fixed;border:2px solid #e2f2a7;background:#e2f2a733;pointer-events:none}.hint{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#242c26;color:white;padding:12px 18px;border-radius:8px;font:14px 'Segoe UI',sans-serif;pointer-events:none}
-  </style><div id="marks"></div><div class="hud"><div class="top"><span class="name">◎ MCQ Lens</span><button id="off" aria-label="Turn off MCQ Lens">Turn off</button></div><div class="status" role="status"></div><div class="reason"></div><div class="buttons"><button id="rescan">Scan now</button><button id="area">Choose area</button><button id="reset">Full screen</button></div></div>`;
+    .top{display:flex;gap:12px;align-items:center;justify-content:space-between}.name{font-weight:700}.status{margin-top:6px;font-size:12px;color:#616b62}.buttons{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.report{margin-top:10px}.report textarea{box-sizing:border-box;width:100%;min-height:64px;font:12px 'Segoe UI',sans-serif;border:1px solid #cbd3c4;border-radius:6px;padding:6px;resize:vertical}.report label{display:flex;gap:6px;align-items:center;font-size:12px;margin:6px 0}button{font:12px 'Segoe UI',sans-serif;border:1px solid #cbd3c4;background:transparent;border-radius:6px;padding:5px 8px;cursor:pointer;color:#315e3a}button:hover{background:#e2f2a7}button:focus-visible{outline:2px solid #315e3a}.box{position:fixed;box-sizing:border-box;border:3px solid #38753a;border-radius:6px;background:#b8ec7438;pointer-events:none}.box.low{border-color:#b07b1e;background:#efbd5430}.box span{position:absolute;top:-21px;left:0;background:#315e3a;color:white;padding:2px 6px;border-radius:4px;white-space:nowrap;font:11px 'Segoe UI',sans-serif}.box.low span{background:#94621b}.reason{max-height:200px;overflow:auto;margin-top:8px;font-size:12px}.reason p{margin:7px 0}.region{position:fixed;box-sizing:border-box;border:1px dashed #315e3a;pointer-events:none}.veil{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;background:#0004;touch-action:none}.selection{position:fixed;border:2px solid #e2f2a7;background:#e2f2a733;pointer-events:none}.hint{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#242c26;color:white;padding:12px 18px;border-radius:8px;font:14px 'Segoe UI',sans-serif;pointer-events:none}
+  </style><div id="marks"></div><div class="hud"><div class="top"><span class="name">◎ MCQ Lens</span><button id="off" aria-label="Turn off MCQ Lens">Turn off</button></div><div class="status" role="status"></div><div class="reason"></div><div class="buttons"><button id="rescan">Scan now</button><button id="area">Choose area</button><button id="reset">Full screen</button><button id="report">Report a problem</button></div><form class="report" hidden><textarea id="note" maxlength="2000" placeholder="What went wrong? (no personal details)"></textarea><label><input id="shot" type="checkbox"> Include a screenshot of the question area</label><div class="buttons"><button id="send" type="submit">Send report</button><button id="cancel" type="button">Cancel</button></div></form></div>`;
   const marks = root.querySelector('#marks'), hud = root.querySelector('.hud'), reasons = root.querySelector('.reason');
   const setStatus = text => { status = text; root.querySelector('.status').textContent = text; };
+  // A short log of what the extension did, sent with bug reports. Steps only: never question text or page content.
+  const started = Date.now(), events = [];
+  const log = (type, detail = '') => { events.push({ t: Date.now() - started, type, detail: String(detail).slice(0, 200) }); if (events.length > 40) events.shift(); };
+  const report = fields => chrome.runtime.sendMessage({ type: 'REPORT', report: { site: location.hostname, events: [...events], ...fields } }).catch(() => ({}));
+  // Limits and superseded scans are normal operation, not bugs.
+  const EXPECTED = ['daily', 'rate', 'busy', 'superseded', 'throttle', 'cancelled', 'paused'];
   const clear = () => { marks.replaceChildren(); reasons.replaceChildren(); placed = []; };
   const send = message => chrome.runtime.sendMessage(message);
   // Whole-page text, used only locally: unlike the visible area it does not change when the user scrolls.
@@ -157,22 +163,29 @@
     try {
       // Same question: scrolling, clicking elsewhere or a ticking timer never re-asks.
       if (answered && answered.url === url && ((key && key === answered.key) || (answered.text === text && shift < 0.5 && (answered.key || shift > 0)))) {
-        answered.text = text; reposition(); setStatus(answered.status); return;
+        answered.text = text; reposition(); setStatus(answered.status); log('same-question', key ? 'page text' : 'text unchanged'); return;
       }
       let shot;
       if (!key) {
         shot = await snapshot();
         if (!enabled || version !== generation) return;
-        if (shot.paused) { setStatus('Paused. Bring this tab and window to the foreground.'); return; }
-        if (shot.error) throw new Error(shot.error);
+        if (shot.paused) { setStatus('Paused. Bring this tab and window to the foreground.'); log('paused', 'capture: window not focused'); return; }
+        if (shot.error) throw Object.assign(new Error(shot.error), { stage: 'capture' });
         // Image or canvas questions: unchanged pixels at the same scroll position mean the same question.
-        if (answered && !answered.key && answered.url === url && shift === 0 && same(answered.pixels, shot.pixels)) { answered.text = text; setStatus(answered.status); return; }
+        if (answered && !answered.key && answered.url === url && shift === 0 && same(answered.pixels, shot.pixels)) { answered.text = text; setStatus(answered.status); log('same-question', 'pixels'); return; }
       }
       clear(); setStatus('Reading question and checking the answer…');
+      const asked = Date.now();
+      log('ask', key ? `page text, ${extracted[0].options.length} options` : `screenshot ${Math.round(area.w)}x${Math.round(area.h)}${crop ? ' (area)' : ''}`);
       const response = await send({ type: 'SOLVE', image: shot?.image || '', extractedQuestions: extracted });
       if (!enabled || version !== generation) return;
-      if (response.paused) { setStatus('Paused. Bring this tab and window to the foreground.'); return; }
-      if (response.error) { retryAt = Date.now() + (response.retryMs || 10000); setStatus(response.error); return; }
+      if (response.paused) { setStatus('Paused. Bring this tab and window to the foreground.'); log('paused', 'answer: window not focused'); return; }
+      if (response.error) {
+        retryAt = Date.now() + (response.retryMs || 10000); setStatus(response.error);
+        log('error', `${response.stage || 'service'}/${response.reason || response.status || '-'} after ${Date.now() - asked} ms`);
+        if (!EXPECTED.includes(response.reason)) report({ kind: 'auto', stage: response.stage || 'service', reason: response.reason || String(response.status || ''), message: response.error });
+        return;
+      }
       // Reject the answer if the question changed while it was being worked out.
       let changed = location.href !== url;
       if (!changed && key) { const after = readPageQuestions(area); changed = after ? questionKey(after) !== key : docText() !== text; }
@@ -181,11 +194,16 @@
         if (!enabled || version !== generation) return;
         changed = docText() !== text && Boolean(current.pixels) && !same(shot.pixels, current.pixels);
       } else if (!changed) changed = docText() !== text;
-      if (changed) { setStatus('Question changed while reading. Scanning again…'); delay = 250; return; }
+      if (changed) { setStatus('Question changed while reading. Scanning again…'); log('question-changed', 'while answering'); delay = 250; return; }
       answered = { key, text: docText(), url, origin, pixels: shot?.pixels };
       answered.status = render(response.questions || [], area, origin);
+      log('answer', `${(response.questions || []).reduce((n, q) => n + q.answers.length, 0)} suggestion(s) in ${Date.now() - asked} ms`);
     } catch (error) {
-      if (enabled && version === generation) { clear(); answered = null; setStatus(error.message || 'Could not scan this tab. Re-enable the extension.'); retryAt = Date.now() + 10000; }
+      if (enabled && version === generation) {
+        clear(); answered = null; setStatus(error.message || 'Could not scan this tab. Re-enable the extension.'); retryAt = Date.now() + 10000;
+        log('error', `${error.stage || 'extension'}: ${error.message}`);
+        report({ kind: 'auto', stage: error.stage || 'extension', reason: 'exception', message: `${error.message} @ ${(error.stack || '').split('\n')[1]?.trim().slice(0, 160) || '-'}` });
+      }
     } finally { busy = false; schedule(retryAt > Date.now() ? retryAt - Date.now() : delay); }
   }
   function chooseArea() {
@@ -213,6 +231,24 @@
     };
   }
   root.querySelector('#off').onclick = stop;
+  const form = root.querySelector('.report');
+  root.querySelector('#report').onclick = () => { form.hidden = !form.hidden; if (!form.hidden) root.querySelector('#note').focus(); };
+  root.querySelector('#cancel').onclick = () => { form.hidden = true; };
+  form.onsubmit = async event => {
+    event.preventDefault();
+    const note = root.querySelector('#note').value.trim(), withShot = root.querySelector('#shot').checked;
+    if (!note && !withShot) { setStatus('Describe the problem or include a screenshot.'); return; }
+    root.querySelector('#send').disabled = true;
+    try {
+      // The screenshot is taken only when the user ticked the box, and only of the visible question area.
+      const shot = withShot ? await snapshot() : null;
+      const result = await report({ kind: 'user', note, screenshot: shot?.image || '', message: `Status: ${status}`.slice(0, 500) });
+      if (result?.error) throw new Error(result.error);
+      form.hidden = true; root.querySelector('#note').value = ''; root.querySelector('#shot').checked = false;
+      setStatus(`Thanks, report #${result?.id ?? ''} sent. We'll look into it.`);
+    } catch (error) { setStatus(`Report not sent: ${error.message}`); }
+    finally { root.querySelector('#send').disabled = false; }
+  };
   root.querySelector('#rescan').onclick = () => { invalidate(); retryAt = 0; setStatus('Scanning…'); schedule(100); };
   root.querySelector('#area').onclick = chooseArea;
   root.querySelector('#reset').onclick = () => { crop = null; invalidate(); setStatus('Watching the full visible screen.'); schedule(200); };
@@ -232,6 +268,7 @@
       if (message.enabled) {
         enabled = true; interval = Math.min(60, Math.max(6, Number(message.interval) || 10)) * 1000;
         invalidate(); retryAt = 0; document.documentElement.append(host); hud.hidden = false; setStatus('Watching this tab. Scanning…'); schedule(300);
+        log('enabled', `check every ${interval / 1000}s`);
       } else stop();
       reply({ enabled, status });
     }

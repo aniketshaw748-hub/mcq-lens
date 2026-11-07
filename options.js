@@ -1,6 +1,7 @@
 const $ = id => document.getElementById(id);
 const fields = { groq: 'groqKey', gemini: 'geminiKey', zai: 'zaiKey' };
-chrome.storage.local.get(['groqKey', 'geminiKey', 'zaiKey', 'apiKey', 'interval']).then(s => {
+chrome.storage.local.get(['groqKey', 'geminiKey', 'zaiKey', 'apiKey', 'interval', 'autoReports']).then(s => {
+  $('auto-reports').checked = s.autoReports !== false;
   $('groq').value = s.groqKey || ''; $('gemini').value = s.geminiKey || s.apiKey || ''; $('zai').value = s.zaiKey || ''; $('interval').value = s.interval || 10;
 });
 $('keys-form').onsubmit = async event => {
@@ -20,6 +21,10 @@ $('remove').onclick = async () => {
   await chrome.storage.local.remove(['apiKey', ...Object.values(fields)]);
   for (const id of Object.keys(fields)) $(id).value = '';
   $('status').textContent = 'Saved keys deleted. Using the shared service.';
+};
+$('auto-reports').onchange = async () => {
+  await chrome.storage.local.set({ autoReports: $('auto-reports').checked });
+  $('reports-status').textContent = $('auto-reports').checked ? 'Automatic error reports are on.' : 'Automatic error reports are off. You can still send a report yourself.';
 };
 $('save-interval').onclick = async () => {
   const interval = Number($('interval').value);
