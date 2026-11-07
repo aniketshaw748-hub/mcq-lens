@@ -6,6 +6,7 @@ export const DEFAULT_LIMITS = {
   zai: { rpm: 60, rpd: 5000, tpm: 200000, tpd: 10000000, concurrent: 1 },
   groq120: { rpm: 30, rpd: 1000, tpm: 8000, tpd: 200000, concurrent: 4 },
   groq20: { rpm: 30, rpd: 1000, tpm: 8000, tpd: 200000, concurrent: 4 },
+  groqvision: { rpm: 30, rpd: 1000, tpm: 7000, tpd: 500000, concurrent: 4 },
   gemini: { rpm: 5, rpd: 20, tpm: 16000, tpd: 200000, concurrent: 2 },
   search: { rpm: 5, rpd: 500, tpm: 1e9, tpd: 1e9, concurrent: 2 }
 };
@@ -29,8 +30,9 @@ export async function requestProvider(env, provider, body, signal) {
   const maxOutput = body.max_tokens || body.generationConfig?.maxOutputTokens || Number(env.MAX_OUTPUT_TOKENS || 1800);
   const serialized = JSON.stringify(body, (key, value) => key === 'data' || (typeof value === 'string' && value.startsWith('data:image/')) ? '' : value);
   const hasImage = JSON.stringify(body).includes('image/jpeg');
-  // Gemini's published TPM limit counts input tokens; Groq combines input/output.
-  const tokens = Math.ceil(serialized.length / 3) + (provider.name === 'gemini' ? 0 : maxOutput) + (hasImage ? 4096 : 0);
+  // Gemini and Groq vision limit input tokens per minute; Groq's text models combine input/output.
+  // A screenshot of at most 1600px measured ~2,000 tokens on Groq vision; the release corrects to actual usage.
+  const tokens = Math.ceil(serialized.length / 3) + (['gemini', 'groqvision'].includes(provider.name) ? 0 : maxOutput) + (hasImage ? 2600 : 0);
   const lease = await quota.reserve({ limits: quotaLimits(env, provider.name), tokens, clock: provider.name === 'gemini' ? 'pacific' : 'utc' });
   if (!lease.id) throw Object.assign(new Error('Provider allowance currently unavailable.'), { retryMs: lease.retryMs, provider: provider.name, reason: lease.reason || 'cooldown' });
   let actualTokens, cooldownMs = 0;

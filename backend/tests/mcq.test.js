@@ -72,3 +72,24 @@ test('reading failures preserve stage and daily-limit reason', async () => {
   const env = { GEMINI_API_KEY: 'test-reader', QUOTA: { getByName: () => ({ reserve: async () => ({ reason: 'daily', retryMs: 60000 }) }) } };
   await assert.rejects(solveMCQ(env, { image: 'test-image', mode: 'mcq' }), error => error.stage === 'reading' && error.reason === 'daily' && error.message.includes('screenshot-reading allowance'));
 });
+test('when Gemini is out for the day, Groq vision reads the screenshot', async () => {
+  const originalFetch = globalThis.fetch;
+  const models = [];
+  globalThis.fetch = async (url, request) => {
+    const body = JSON.parse(request.body); models.push(body.model);
+    assert.ok(!url.includes('googleapis'));
+    if (body.model === 'qwen/qwen3.8-27b') {
+      assert.equal(body.reasoning_effort, 'none');
+      assert.equal(body.thinking, undefined);
+      return Response.json({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ questions: extracted }) } }] });
+    }
+    return Response.json({ choices: [{ finish_reason: 'stop', message: { content: JSON.stringify({ decisions: [decision] }) } }] });
+  };
+  try {
+    const quota = name => ({ reserve: async () => name === 'provider:gemini' ? { reason: 'daily', retryMs: 60000 } : { id: 'lease' }, release: async () => {} });
+    const env = { GEMINI_API_KEY: 'test-reader', GROQ_API_KEY: 'test-groq', ZAI_API_KEY: 'test-zai', QUOTA: { getByName: quota } };
+    const output = await solveMCQ(env, { image: 'test-image', mode: 'mcq' }, new AbortController().signal);
+    assert.equal(output.reader, 'groqvision');
+    assert.deepEqual(models, ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b']);
+  } finally { globalThis.fetch = originalFetch; }
+});

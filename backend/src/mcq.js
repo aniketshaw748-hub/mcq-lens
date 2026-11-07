@@ -61,18 +61,29 @@ function stageFailure(stage, failures) {
 function reportFailure(stage, provider, error) {
   console.log(JSON.stringify({ event: 'mcq_provider_failure', stage, provider: provider.name, reason: error.reason || 'invalid_output', upstreamStatus: error.upstreamStatus }));
 }
+// Gemini first (best layout reading), then Groq vision and Z.ai so one exhausted or busy reader never blocks scanning.
+function screenshotReaders(env, input) {
+  const readers = routes(env, input);
+  if (env.GROQ_API_KEY) readers.push({ name: 'groqvision', model: 'qwen/qwen3.8-27b', key: env.GROQ_API_KEY, url: 'https://api.groq.com/openai/v1/chat/completions' });
+  const order = ['gemini', 'groqvision', 'zai'];
+  return readers.sort((a, b) => order.indexOf(a.name) - order.indexOf(b.name));
+}
 export async function solveMCQ(env, input, signal) {
   let questions, reader;
   if (input.extractedQuestions?.length) { questions = validateExtraction({ questions: input.extractedQuestions }); reader = 'page-text'; }
   const readingFailures = [];
-  const readers = questions ? [] : routes(env, input).sort((a, b) => Number(b.name === 'gemini') - Number(a.name === 'gemini'));
+  const readers = questions ? [] : screenshotReaders(env, input);
   for (const provider of readers) {
     try {
       let data;
       if (provider.name === 'gemini') data = jsonFromGemini(await requestProvider(env, provider, extractionRequest(input.image), signal));
       else {
         const instruction = extractionRequest('').systemInstruction.parts[0].text + ' Return JSON {"questions":[{"question":"complete transcription","selectionMode":"single","options":[{"text":"exact option","box":[0,0,100,100]}]}]}.';
-        const result = await requestProvider(env, provider, { model: provider.model, messages: [{ role: 'system', content: instruction }, { role: 'user', content: [{ type: 'text', text: 'Transcribe the visible questions and every option; do not solve.' }, { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${input.image}` } }] }], max_tokens: 4096, response_format: { type: 'json_object' }, thinking: { type: 'disabled' } }, signal);
+        const body = { model: provider.model, messages: [{ role: 'system', content: instruction }, { role: 'user', content: [{ type: 'text', text: 'Transcribe the visible questions and every option; do not solve.' }, { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${input.image}` } }] }], max_tokens: 4096, response_format: { type: 'json_object' } };
+        // Groq's free vision tier allows 8,000 tokens a minute, so keep its reservation small.
+        if (provider.name === 'groqvision') Object.assign(body, { max_tokens: 2048, temperature: 0, reasoning_effort: 'none' });
+        else body.thinking = { type: 'disabled' };
+        const result = await requestProvider(env, provider, body, signal);
         if (result.choices?.[0]?.finish_reason !== 'stop') throw new Error('Transcription did not finish.');
         data = JSON.parse(result.choices[0].message.content);
       }
