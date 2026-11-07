@@ -9,20 +9,20 @@ const page = await browser.newPage({ viewport: { width: 1100, height: 800 } });
 const errors = [];
 page.on('pageerror', error => errors.push(error.message));
 try {
-  await page.setContent(`<html><head><style>body{font:20px Arial;padding:60px;background:#fff}label{display:block;padding:20px;margin:10px;background:#f2f2f2;max-width:700px}button{padding:16px}</style></head><body><h1 id="q">What is 2 + 2?</h1><label><input type="radio" name="a"> 3</label><label><input type="radio" name="a"> 4</label><label><input type="radio" name="a"> 5</label><label><input type="radio" name="a"> 6</label><button id="next">Next question</button></body></html>`);
+  await page.setContent(`<html><head><style>body{font:20px Arial;padding:60px;background:#fff;min-height:2400px}label{display:block;padding:20px;margin:10px;background:#f2f2f2;max-width:700px}button{padding:16px}</style></head><body><h1 id="q">What is 2 + 2?</h1><label><input type="radio" name="a"> 3</label><label><input type="radio" name="a"> 4</label><label><input type="radio" name="a"> 5</label><label><input type="radio" name="a"> 6</label><button id="next">Next question</button></body></html>`);
   await page.evaluate(() => {
     window.testRoots = [];
     const attach = Element.prototype.attachShadow;
     Element.prototype.attachShadow = function (options) { const root = attach.call(this, options); window.testRoots.push(root); return root; };
     const canvas = document.createElement('canvas'); canvas.width = 1100; canvas.height = 800;
     const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 1100, 800);
-    window.image1 = canvas.toDataURL(); ctx.fillStyle = 'black'; ctx.fillRect(50, 50, 900, 80); window.image2 = canvas.toDataURL();
+    window.image1 = canvas.toDataURL(); ctx.fillStyle = 'black'; ctx.fillRect(50, 50, 900, 80); window.image2 = canvas.toDataURL(); ctx.fillStyle = 'blue'; ctx.fillRect(50, 300, 900, 300); window.image3 = canvas.toDataURL();
     window.calls = []; window.listeners = []; window.delay = 0; window.failure = null;
     window.chrome = { runtime: {
       onMessage: { addListener(fn) { window.listeners.push(fn); } },
       async sendMessage(message) {
         window.calls.push(message.type);
-        if (message.type === 'CAPTURE') return { image: window.imageOverride || (document.querySelector('#q').textContent.includes('capital') ? window.image2 : window.image1) };
+        if (message.type === 'CAPTURE') return window.unfocused ? { paused: true } : { image: window.imageOverride || (document.querySelector('#q').textContent.includes('capital') ? window.image2 : document.querySelector('#q').textContent.includes('appeared') ? window.image3 : window.image1) };
         if (message.type === 'SOLVE') {
           const question = document.querySelector('#q').textContent;
           if (window.delay) await new Promise(resolve => setTimeout(resolve, window.delay));
@@ -49,6 +49,20 @@ try {
   await page.waitForTimeout(6500);
   assert.equal(await page.evaluate(() => window.calls.filter(x => x === 'SOLVE').length), initialRequests);
   console.log('PASS unchanged screenshots use no new API request');
+
+  const boxTop = () => page.evaluate(() => parseFloat(window.testRoots[0].querySelector('.box').style.top));
+  const labelTop = () => page.evaluate(() => document.querySelectorAll('label')[1].getBoundingClientRect().top);
+  await page.mouse.wheel(0, 150); await page.waitForTimeout(1800);
+  assert.equal(await page.evaluate(() => window.calls.filter(x => x === 'SOLVE').length), initialRequests);
+  assert.equal(await boxCount(), 1); assert.ok(Math.abs(await boxTop() - await labelTop()) < 2);
+  console.log('PASS scrolling moves the highlight with its option and does not re-read');
+  await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(500);
+  await page.evaluate(() => { window.unfocused = true; });
+  await waitStatus('Paused'); assert.equal(await boxCount(), 1);
+  await page.evaluate(() => { window.unfocused = false; });
+  await waitStatus('1 suggested');
+  assert.equal(await page.evaluate(() => window.calls.filter(x => x === 'SOLVE').length), initialRequests);
+  console.log('PASS clicking out of the window keeps the highlight and does not re-read on return');
 
   await page.evaluate(() => { document.querySelector('#q').textContent = 'What is the capital of France?'; document.querySelectorAll('label').forEach((label, i) => { label.lastChild.textContent = [' London', ' Paris', ' Rome', ' Berlin'][i]; }); });
   await page.waitForFunction(() => window.testRoots[0].querySelector('.reason').textContent.includes('Paris'));
@@ -77,7 +91,7 @@ try {
   assert.equal(await page.locator('#mcq-lens-overlay').count(), 0);
   console.log('PASS disabling cancels the scan and rejects late results');
 
-  await page.evaluate(() => { window.delay = 1500; window.dispatchExtension({ type: 'TOGGLE', enabled: true, interval: 6 }); });
+  await page.evaluate(() => { window.delay = 1500; window.imageOverride = null; window.dispatchExtension({ type: 'TOGGLE', enabled: true, interval: 6 }); });
   await waitStatus('Reading');
   await page.evaluate(() => { document.querySelector('#q').textContent = 'A new question appeared before the result'; });
   await waitStatus('changed while reading'); assert.equal(await boxCount(), 0);

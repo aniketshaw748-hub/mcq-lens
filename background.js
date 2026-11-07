@@ -29,7 +29,7 @@ async function handle(message, sender) {
   // A random install ID keeps this browser's daily allowance; no account or link is needed.
   if (!settings.clientId) { settings.clientId = crypto.randomUUID(); await chrome.storage.local.set({ clientId: settings.clientId }); }
   const remaining = (lastRequest.get(tab.id) || 0) - Date.now();
-  if (remaining > 0) return { error: 'Waiting before the next request.', retryMs: remaining };
+  if (remaining > 0) return { error: 'Queued. Checking this question in a moment…', retryMs: remaining };
   jobs.get(tab.id)?.abort();
   const controller = new AbortController();
   jobs.set(tab.id, controller);

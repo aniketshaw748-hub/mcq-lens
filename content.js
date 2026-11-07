@@ -2,8 +2,7 @@
   if (globalThis.__mcqLens) return;
   globalThis.__mcqLens = true;
   let enabled = false, busy = false, timer, generation = 0, interval = 10000;
-  let signature = null, crop = null, status = 'Off', retryAt = 0, selecting = false;
-  let lastGeometry = '', lastText = '';
+  let answered = null, placed = [], crop = null, status = 'Off', retryAt = 0, selecting = false;
   const host = document.createElement('div');
   host.id = 'mcq-lens-overlay';
   host.style.cssText = 'all:initial;position:fixed;inset:0;z-index:2147483647;pointer-events:none';
@@ -14,28 +13,24 @@
   </style><div id="marks"></div><div class="hud"><div class="top"><span class="name">◎ MCQ Lens</span><button id="off" aria-label="Turn off MCQ Lens">Turn off</button></div><div class="status" role="status"></div><div class="reason"></div><div class="buttons"><button id="rescan">Scan now</button><button id="area">Choose area</button><button id="reset">Full screen</button></div></div>`;
   const marks = root.querySelector('#marks'), hud = root.querySelector('.hud'), reasons = root.querySelector('.reason');
   const setStatus = text => { status = text; root.querySelector('.status').textContent = text; };
-  const clear = () => { marks.replaceChildren(); reasons.replaceChildren(); };
+  const clear = () => { marks.replaceChildren(); reasons.replaceChildren(); placed = []; };
   const send = message => chrome.runtime.sendMessage(message);
-  const geometry = () => `${innerWidth},${innerHeight},${scrollX},${scrollY},${devicePixelRatio},${location.href}`;
-  // Used only locally to reject answers if the page changed while the API was working.
-  const pageText = () => {
-    const area = crop || { x: 0, y: 0, w: innerWidth, h: innerHeight };
-    const walker = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_TEXT);
-    const text = [];
-    let node;
-    while ((node = walker.nextNode())) {
-      if (!node.textContent.trim() || /^(SCRIPT|STYLE|NOSCRIPT)$/.test(node.parentElement?.tagName)) continue;
-      const rect = node.parentElement?.getBoundingClientRect();
-      if (rect && rect.width && rect.height && rect.right > area.x && rect.left < area.x + area.w && rect.bottom > area.y && rect.top < area.y + area.h) text.push(node.textContent);
+  // Whole-page text, used only locally: unlike the visible area it does not change when the user scrolls.
+  const docText = () => (document.body || document.documentElement).innerText.slice(0, 200000);
+  const questionKey = questions => JSON.stringify(questions.map(q => [q.question, q.options.map(o => o.text)]));
+  // Highlights follow their option on the page (or their page position) instead of forcing a re-read.
+  function reposition() {
+    for (const mark of placed) {
+      const r = mark.target?.isConnected ? mark.target.getBoundingClientRect() : { left: mark.x - scrollX, top: mark.y - scrollY, width: mark.w, height: mark.h };
+      mark.box.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`;
     }
-    return text.join(' ').slice(0, 150000);
-  };
+  }
   function schedule(delay = interval) {
     clearTimeout(timer);
     if (enabled) timer = setTimeout(scan, delay);
   }
   function invalidate() {
-    generation++; signature = null; clear();
+    generation++; answered = null; clear();
     send({ type: 'CANCEL' }).catch(() => {});
   }
   function stop() {
@@ -115,7 +110,7 @@
     if (options.some(option => !option.text) || new Set(options.map(option => option.text)).size !== options.length) return;
     return [{ question, selectionMode: 'single', options }];
   }
-  function render(questions, area) {
+  function render(questions, area, origin) {
     clear();
     let count = 0;
     for (const q of questions) {
@@ -135,49 +130,63 @@
           const rect = element.getBoundingClientRect();
           if (!rect.width || !rect.height || rect.right <= area.x || rect.left >= area.x + area.w || rect.bottom <= area.y || rect.top >= area.y + area.h) return [];
           const distance = Math.hypot(rect.left + rect.width / 2 - predicted.x - predicted.w / 2, rect.top + rect.height / 2 - predicted.y - predicted.h / 2);
-          return [{ rect, distance }];
+          return [{ element, distance }];
         }).sort((a, b) => a.distance - b.distance);
-        const matched = matches[0]?.rect;
-        const position = matched ? { x: matched.left, y: matched.top, w: matched.width, h: matched.height } : predicted;
         const box = document.createElement('div');
         box.className = `box${q.confidence === 'high' ? '' : ' low'}`;
-        box.style.cssText = `left:${position.x}px;top:${position.y}px;width:${position.w}px;height:${position.h}px`;
+        placed.push({ box, target: matches[0]?.element, x: predicted.x + origin.x, y: predicted.y + origin.y, w: predicted.w, h: predicted.h });
         const label = document.createElement('span'); label.textContent = q.confidence === 'high' ? 'Suggested answer' : `Uncertain · ${q.confidence}`;
         box.append(label); marks.append(box); count++;
       }
     }
+    reposition();
     setStatus(count ? `${count} suggested option${count === 1 ? '' : 's'} · watching for changes` : 'No complete, answerable MCQ found. Watching…');
+    return status;
   }
   async function scan() {
     if (!enabled || busy || selecting) return;
-    if (document.hidden) { clear(); signature = null; setStatus('Paused while this tab is hidden.'); schedule(); return; }
-    if (Date.now() < retryAt) { schedule(Math.max(interval, retryAt - Date.now())); return; }
+    // A hidden tab keeps its highlight; it is checked again when the tab is back.
+    if (document.hidden) { setStatus('Paused while this tab is hidden.'); schedule(); return; }
+    if (Date.now() < retryAt) { schedule(retryAt - Date.now()); return; }
     busy = true;
-    const version = generation;
-    const startGeometry = geometry();
-    const startText = pageText();
+    let delay = interval;
+    const version = generation, area = crop || { x: 0, y: 0, w: innerWidth, h: innerHeight }, origin = { x: scrollX, y: scrollY };
+    const text = docText(), url = location.href, extracted = readPageQuestions(area), key = extracted ? questionKey(extracted) : null;
+    // How far the view moved since the last answer, in screens.
+    const shift = answered ? Math.max(Math.abs(answered.origin.x - origin.x) / innerWidth, Math.abs(answered.origin.y - origin.y) / innerHeight) : 0;
     try {
-      const shot = await snapshot();
-      if (!enabled || version !== generation) return;
-      if (shot.paused) { signature = null; clear(); setStatus('Paused. Bring this tab and window to the foreground.'); return; }
-      if (shot.error) throw new Error(shot.error);
-      if (startGeometry !== geometry() || startText !== pageText()) { invalidate(); setStatus('Page changed. Waiting for it to settle…'); return; }
-      if (same(signature, shot.pixels)) return;
+      // Same question: scrolling, clicking elsewhere or a ticking timer never re-asks.
+      if (answered && answered.url === url && ((key && key === answered.key) || (answered.text === text && shift < 0.5 && (answered.key || shift > 0)))) {
+        answered.text = text; reposition(); setStatus(answered.status); return;
+      }
+      let shot;
+      if (!key) {
+        shot = await snapshot();
+        if (!enabled || version !== generation) return;
+        if (shot.paused) { setStatus('Paused. Bring this tab and window to the foreground.'); return; }
+        if (shot.error) throw new Error(shot.error);
+        // Image or canvas questions: unchanged pixels at the same scroll position mean the same question.
+        if (answered && !answered.key && answered.url === url && shift === 0 && same(answered.pixels, shot.pixels)) { answered.text = text; setStatus(answered.status); return; }
+      }
       clear(); setStatus('Reading question and checking the answer…');
-      const response = await send({ type: 'SOLVE', image: shot.image, extractedQuestions: readPageQuestions(shot.area) });
+      const response = await send({ type: 'SOLVE', image: shot?.image || '', extractedQuestions: extracted });
       if (!enabled || version !== generation) return;
-      if (response.paused) { setStatus('Paused. Bring this tab to the foreground.'); return; }
+      if (response.paused) { setStatus('Paused. Bring this tab and window to the foreground.'); return; }
       if (response.error) { retryAt = Date.now() + (response.retryMs || 10000); setStatus(response.error); return; }
-      if (startGeometry !== geometry() || startText !== pageText()) { invalidate(); setStatus('Question changed while reading. Scanning again…'); return; }
-      // Image/canvas questions can change without any DOM text mutation.
-      const current = await snapshot();
-      if (!enabled || version !== generation) return;
-      if (!current.pixels || !same(shot.pixels, current.pixels)) { signature = null; setStatus('Screen changed while reading. Scanning again…'); return; }
-      signature = shot.pixels; lastGeometry = geometry(); lastText = startText;
-      render(response.questions || [], shot.area);
+      // Reject the answer if the question changed while it was being worked out.
+      let changed = location.href !== url;
+      if (!changed && key) { const after = readPageQuestions(area); changed = after ? questionKey(after) !== key : docText() !== text; }
+      else if (!changed && scrollX === origin.x && scrollY === origin.y) {
+        const current = await snapshot();
+        if (!enabled || version !== generation) return;
+        changed = docText() !== text && Boolean(current.pixels) && !same(shot.pixels, current.pixels);
+      } else if (!changed) changed = docText() !== text;
+      if (changed) { setStatus('Question changed while reading. Scanning again…'); delay = 250; return; }
+      answered = { key, text: docText(), url, origin, pixels: shot?.pixels };
+      answered.status = render(response.questions || [], area, origin);
     } catch (error) {
-      if (enabled && version === generation) { clear(); setStatus(error.message || 'Could not scan this tab. Re-enable the extension.'); retryAt = Date.now() + 10000; }
-    } finally { busy = false; schedule(); }
+      if (enabled && version === generation) { clear(); answered = null; setStatus(error.message || 'Could not scan this tab. Re-enable the extension.'); retryAt = Date.now() + 10000; }
+    } finally { busy = false; schedule(retryAt > Date.now() ? retryAt - Date.now() : delay); }
   }
   function chooseArea() {
     if (!enabled || selecting) return;
@@ -198,7 +207,7 @@
     veil.onpointerup = event => {
       if (!start) return;
       const next = { x: Math.min(start.x, event.clientX), y: Math.min(start.y, event.clientY), w: Math.abs(start.x - event.clientX), h: Math.abs(start.y - event.clientY) };
-      if (next.w >= 80 && next.h >= 60) { crop = next; signature = null; setStatus('Question area selected. Scanning…'); }
+      if (next.w >= 80 && next.h >= 60) { crop = next; answered = null; setStatus('Question area selected. Scanning…'); }
       else setStatus('Area too small. Kept the previous area.');
       cleanup();
     };
@@ -207,15 +216,15 @@
   root.querySelector('#rescan').onclick = () => { invalidate(); retryAt = 0; setStatus('Scanning…'); schedule(100); };
   root.querySelector('#area').onclick = chooseArea;
   root.querySelector('#reset').onclick = () => { crop = null; invalidate(); setStatus('Watching the full visible screen.'); schedule(200); };
-  // Scrolling/zooming makes screen coordinates stale: remove highlights immediately.
-  window.addEventListener('scroll', () => { if (enabled) { invalidate(); setStatus('View moved. Scanning again…'); schedule(800); } }, true);
-  window.addEventListener('resize', () => { if (enabled) { crop = null; invalidate(); setStatus('View resized. Area reset to full screen.'); schedule(800); } });
-  document.addEventListener('visibilitychange', () => { if (enabled) { invalidate(); schedule(300); } });
-  // Check locally every 500ms so an old highlight never waits a full API interval
-  // on text questions. Screenshots also detect image-only/canvas changes.
+  // Scrolling moves the highlights with the page; only a changed question triggers a new read.
+  window.addEventListener('scroll', () => { if (enabled) requestAnimationFrame(reposition); }, { capture: true, passive: true });
+  window.addEventListener('resize', () => { if (enabled) { crop = null; reposition(); schedule(800); } });
+  document.addEventListener('visibilitychange', () => { if (enabled && !document.hidden) schedule(300); });
+  // Check locally every 500ms whether the page text changed; scan() then decides if the question did.
   setInterval(() => {
-    if (!enabled || busy || selecting || !signature || document.hidden) return;
-    if (lastGeometry !== geometry() || lastText !== pageText()) { invalidate(); setStatus('Question or page changed. Scanning again…'); schedule(250); }
+    if (!enabled || busy || selecting || !answered || document.hidden) return;
+    reposition();
+    if (location.href !== answered.url || docText() !== answered.text) schedule(250);
   }, 500);
   chrome.runtime.onMessage.addListener((message, sender, reply) => {
     if (message.type === 'STATE') reply({ enabled, status });

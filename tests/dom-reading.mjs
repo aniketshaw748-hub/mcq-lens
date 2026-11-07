@@ -24,6 +24,12 @@ try {
   assert.match(questions[0].question, /7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2/);
   assert.equal(questions[0].options.length, 4);
   console.log('PASS full Q7 prompt, reference string and four options extracted; short control legend is not the question.');
+  await page.evaluate(() => { const timer = document.createElement('p'); timer.id = 'timer'; document.querySelector('section').append(timer); window.tick = setInterval(() => { timer.textContent = `Time left ${Date.now()}`; }, 300); });
+  await page.waitForTimeout(2500);
+  await page.mouse.wheel(0, 120); await page.waitForTimeout(1500);
+  assert.equal(await page.evaluate(() => window.scans.length), 1);
+  await page.evaluate(() => { clearInterval(window.tick); document.getElementById('timer').remove(); scrollTo(0, 0); });
+  console.log('PASS a ticking timer, and scrolling do not re-read the same question.');
   await page.evaluate(async () => { document.querySelectorAll('#options label')[3].style.transform = 'translateY(1500px)'; await window.scan(); });
   await page.waitForFunction(() => window.scans.length === 2);
   assert.equal(await page.evaluate(() => window.scans[1].extractedQuestions), undefined);
@@ -32,4 +38,10 @@ try {
   await page.waitForFunction(() => window.scans.length === 3);
   assert.equal(await page.evaluate(() => window.scans[2].extractedQuestions), undefined);
   console.log('PASS image/canvas question keeps screenshot fallback.');
+  await page.evaluate(() => { document.querySelector('section canvas').remove(); window.scan(); });
+  await page.waitForFunction(() => window.scans.length === 4);
+  await page.locator('#next').click();
+  await page.waitForFunction(() => window.scans.length === 5, null, { timeout: 5000 });
+  assert.match(await page.evaluate(() => window.scans[4].extractedQuestions[0].question), /page-replacement|Banker|safe state|request/i);
+  console.log('PASS clicking Next reads the new question right away.');
 } finally { await browser.close(); }
