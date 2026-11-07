@@ -1,0 +1,12 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mcq-lens",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-07",
+  "workers_dev": true,
+  "assets": { "directory": "public", "binding": "ASSETS", "run_worker_first": ["/api/*"] },
+  "durable_objects": { "bindings": [{ "name": "QUOTA", "class_name": "Quota" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Quota"] }],
+  "observability": { "enabled": true, "head_sampling_rate": 0.1, "traces": { "enabled": true, "head_sampling_rate": 0.1 } },
+  "vars": { "MAX_OUTPUT_TOKENS": "1800", "GEMINI_MODEL": "gemini-2.5-flash-lite", "ALLOWED_ORIGINS": "https://mcq-lens.pages.dev" }
+}
