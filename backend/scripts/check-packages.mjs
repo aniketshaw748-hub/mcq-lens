@@ -3,7 +3,7 @@ import { inflateRawSync } from 'node:zlib';
 const config = await readFile('.dev.vars', 'utf8');
 const values = config.split(/\r?\n/).filter(x => /^[A-Z_]+=/.test(x)).map(x => x.slice(x.indexOf('=') + 1)).filter(x => x.length > 15);
 const version = JSON.parse(await readFile('../manifest.json', 'utf8')).version;
-for (const file of [`../dist/MCQ-Lens-v${version}.zip`, `../dist/MCQ-Lens-source-v${version}.zip`]) {
+for (const file of [`../dist/MCQ-Lens-v${version}.zip`, `../dist/MCQ-Lens-store-v${version}.zip`, `../dist/MCQ-Lens-source-v${version}.zip`]) {
   const buffer = await readFile(file);
   let end = buffer.length - 22;
   while (end >= 0 && buffer.readUInt32LE(end) !== 0x06054b50) end--;
