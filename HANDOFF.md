@@ -1,6 +1,6 @@
 # MCQ Lens — current handoff
 
-As of 2026-11-08: deployed and working at https://mcq-lens.pages.dev. Root extension version comes from `manifest.json` (currently 1.1.1).
+As of 2026-11-08: deployed at https://mcq-lens.pages.dev. Root extension version comes from `manifest.json` (currently 1.1.2). Public source: https://github.com/aniketshaw748-hub/mcq-lens (main).
 
 ## Locked requirements
 
@@ -11,6 +11,10 @@ As of 2026-11-08: deployed and working at https://mcq-lens.pages.dev. Root exten
 - Peak target: 100 students × 50 questions within one hour. This target is not proven; do not imply otherwise.
 
 ## Live state
+
+- RESOLVED 2026-11-08: user showed the generic provider-unavailable message on Q7. Reproduced failure at screenshot reading before reasoning. Owner counters showed Gemini at 19/20 local daily requests before reproduction; its final local slot was then consumed. This is a conservative application cap, not a verified account entitlement. New owner-only diagnostics expose sanitized counters. Failures preserve reading/solving stage and category instead of claiming every provider is busy. No quota was raised or billing activated.
+- Extension 1.1.2 extracts full visible radio-button questions/code/options when reliable, skips screenshot upload and vision inference, and uses the existing text solver. Other layouts or image/canvas content retain screenshot fallback. The test page's short fieldset legend initially hid the actual prompt in QA; corrected by reading the section heading plus reference string, with a regression check. Clipped options refuse partial extraction. Live Q7 chose only C (9 page faults), Next cleared it and Q8 chose only A (P0 requests 3 more units); Groq GPT-OSS-120B, 3.0/2.7 seconds, exact option-row overlap and no vision call.
+- Created a new public GitHub repository using the authenticated gh CLI, initial commit ad9a598. Staged content was scanned for all configured secret values and provider-key patterns; ignored credentials, student links, generated artifacts and dependencies were excluded. Future updates must be committed/pushed there too.
 
 - Added `/test.html`: 50 original hard MCQs drawn from the MAKAUT 2023–24 fifth-semester core technical syllabus, one at a time with Next/Previous/Restart. Subjects: Operating Systems (14), Compiler Design (14), OOP (12), Software Engineering (10). No answer key is loaded into the page. The public syllabus reference is linked in its footer. No student sign-in or AI calls are required to browse the test questions.
 - Test-page verification passed all 50 question transitions, exactly four options per question, Previous, Restart, the last-question boundary, and mobile overflow checks. A production test using the actual extension watcher plus live AI confirmed automatic re-answering after Next; no browser runtime errors. Test artifact: `dist/MAKAUT-Sem5-MCQ-Test.zip`.
@@ -39,7 +43,7 @@ Unverified: sustained 5,000 real answers/hour, Z.ai successful inference, every 
 
 - Extension install folder: `C:\Coding\MCQ-Lens`.
 - Backend source/deploy instructions: `backend/README.md`.
-- Extension package: `dist/MCQ-Lens-v1.1.1.zip`.
-- Complete source package: `dist/MCQ-Lens-source-v1.1.1.zip`.
+- Extension package: `dist/MCQ-Lens-v1.1.2.zip`.
+- Complete source package: `dist/MCQ-Lens-source-v1.1.2.zip`.
 - Both packages are checked for actual key values and private configuration before sharing. Package filenames should be derived from the manifest version on future builds.
 - Backups of the original personal-key-only extension are in `backups/2026-11-07-shared-backend/` and are not shipped.

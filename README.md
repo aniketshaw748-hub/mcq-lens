@@ -13,7 +13,7 @@ The Chrome extension now supports the owner's shared AI service. Students need a
 5. Allow the requested access to that study-service origin.
 6. Open a question tab, enable MCQ Lens, and choose an area around the question and ALL options.
 
-Only enabled tabs are scanned. Hidden tabs and unfocused windows pause. Reloading or navigating switches scanning off. Scroll removes old highlights and rescans; resize resets the selected area. Screenshots are sent only when the selected image changes. Timers and animations may cause extra scans, so keep them outside the selected area. The interval defaults to 10 seconds and is configurable from 6–60 seconds.
+Only enabled tabs are scanned. Hidden tabs and unfocused windows pause. Reloading or navigating switches scanning off. Scroll removes old highlights and rescans; resize resets the selected area. The shared service reads complete radio-button questions directly from visible page text when possible, including code and all options. This skips the vision provider. Other layouts and image/canvas questions use screenshot reading. Requests are sent only when the selected image changes. Timers and animations may cause extra scans, so keep them outside the selected area. The interval defaults to 10 seconds and is configurable from 6–60 seconds.
 
 The shared service permits 50 successful questions per student per UTC day. Every answered changed screenshot counts, including a cached answer. Failed answers refund the daily allowance. Availability depends on the providers' free quotas; the allowance is not a guarantee that all questions can be answered immediately. The extension never clicks or submits answers.
 
@@ -25,7 +25,7 @@ Provider keys live in Cloudflare Worker secrets and the local ignored backend/.d
 
 ## Privacy and correctness
 
-While enabled, screenshot crops go to the owner's server and its configured vision provider (Z.ai or Gemini), or directly to Google when using a personal key. Crop out personal data. The application processes raw screenshots in memory. Answers may be cached for 24 hours, or 5 minutes for search-backed answers. Provider-side processing follows provider terms, including free-tier terms. The extension stores its student access code locally in the Chrome profile, not Chrome Sync.
+While enabled, readable question/option text goes to the owner's server and its text model. If the extension cannot reliably extract a complete question, screenshot crops go to the server and its configured vision provider (Z.ai or Gemini). Personal-key mode sends screenshots directly to Google. Crop out personal data. The application processes raw screenshots in memory. Answers may be cached for 24 hours, or 5 minutes for search-backed answers. Provider-side processing follows provider terms, including free-tier terms. The extension stores its student access code locally in the Chrome profile, not Chrome Sync.
 
 Green marks a high-confidence AI suggestion; amber marks uncertainty. Confidence is the model's subjective judgment. The panel gives the option text and explanation. Highlight placement uses the actual page option when its text matches the answer. For image-only questions, boxes depend on the model's estimated coordinates and can be imprecise. All question text and options must be readable and visible. Answers can be wrong.
 
@@ -36,6 +36,8 @@ Privacy page: https://mcq-lens.pages.dev/privacy.html
 ## Verification
 
 The shared MCQ pipeline now reads the screenshot and solves the transcribed question in separate stages. Live checks on the hard scheduling test questions selected only B (6.5 ms) for Q1 and C (16/3 ms) for Q2, with computed explanations. The old behavior that highlighted every option is rejected. New MCQs supersede obsolete in-flight MCQ requests instead of receiving the old combined busy/rate error. Real provider quotas still apply.
+
+Version 1.1.2 adds page-text reading. Live Q7 (LRU: C, 9 faults) and automatic Next to Q8 (unsafe request: A) selected exactly one correct row using Groq and no vision call. Clipped options and image/canvas content refuse text extraction. Provider failures identify the reading or solving stage rather than displaying one generic message.
 
 - Extension unit tests and real-browser watcher tests passed.
 - Unpacked extension loads; settings save, reveal, delete and interval controls were tested.
