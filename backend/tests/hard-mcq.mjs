@@ -12,7 +12,7 @@ try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 1100 }, bypassCSP: true });
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('https://mcq-lens.pages.dev/test.html?src=hard-mcq-qa');
+  await page.goto('https://mcq-lens.pages.dev/test.html?src=hard-mcq-qa&order=fixed');
   await page.locator('#options label').first().waitFor();
   const q7 = process.argv.includes('--q7');
   if (q7) for (let i = 0; i < 6; i++) await page.locator('#next').click();

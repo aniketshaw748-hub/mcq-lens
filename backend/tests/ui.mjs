@@ -7,7 +7,7 @@ const errors = [];
 try {
   const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto(base);
+  await page.goto(base + '/study');
   await page.waitForFunction(() => document.querySelector('#status').textContent.includes('Ready.'));
   assert.equal(await page.locator('#access').count(), 0);
   await page.locator('#question').fill('Solve 3x + 7 = 22. Show the steps. Use LaTeX for the equations.');

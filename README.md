@@ -50,7 +50,7 @@ Each install gets 50 free questions a day. For more, add your own free Groq, Gem
 
 ## How it works
 
-Shared study app: https://mcq-lens.pages.dev
+Website: https://mcq-lens.pages.dev (landing page and download), https://mcq-lens.pages.dev/install (install guide) and https://mcq-lens.pages.dev/test (25 random practice questions from a bank of 206, with an answer key at the end). The earlier study helper now lives at https://mcq-lens.pages.dev/study.
 
 The extension uses the owner's shared AI service. It works straight after install: no access link, account or API key. Settings has an optional place for a user's own Groq, Gemini or Z.ai keys; with any of them, that user's questions run on their keys only, with no MCQ Lens daily cap.
 
