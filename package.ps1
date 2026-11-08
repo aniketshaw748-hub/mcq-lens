@@ -12,7 +12,7 @@ Write-Output $zipPath
 # Store upload: only the files the extension runs, with manifest.json at the root.
 $storePath = Join-Path $destination "MCQ-Lens-store-v$version.zip"
 $tar = Join-Path $env:SystemRoot 'System32\tar.exe'
-# tar writes forward-slash paths; Compress-Archive in Windows PowerShell writes icons\icon16.png, which Firefox and non-Windows unzip tools misread.
+# tar always writes forward-slash paths; Compress-Archive in Windows PowerShell wrote icons\icon16.png for the Firefox build, which Firefox and non-Windows unzip tools misread.
 Remove-Item -Force -LiteralPath $storePath -ErrorAction SilentlyContinue
 & $tar -a -c -f $storePath -C $projectRoot @runtime
 if ($LASTEXITCODE) { throw 'tar failed' }
