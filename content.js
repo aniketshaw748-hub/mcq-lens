@@ -51,9 +51,9 @@
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
       const response = await send({ type: 'CAPTURE' });
       if (response.paused || !response.image) return response;
-      const image = new Image();
-      image.src = response.image;
-      await image.decode();
+      // A bitmap from the raw bytes: Firefox marks a canvas drawn from a data: <img> in a content script as insecure.
+      const bytes = Uint8Array.from(atob(response.image.split(',')[1]), c => c.charCodeAt(0));
+      const image = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
       const area = crop || { x: 0, y: 0, w: innerWidth, h: innerHeight };
       const scaleX = image.width / innerWidth, scaleY = image.height / innerHeight;
       const canvas = document.createElement('canvas');

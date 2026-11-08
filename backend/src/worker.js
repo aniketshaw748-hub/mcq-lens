@@ -45,7 +45,7 @@ export default {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     const origin = request.headers.get('origin');
-    const extensionOrigin = /^chrome-extension:\/\/[a-p]{32}$/.test(origin || '');
+    const extensionOrigin = /^(chrome-extension:\/\/[a-p]{32}|moz-extension:\/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/.test(origin || '');
     const allowed = !origin || origin === url.origin || extensionOrigin || (env.ALLOWED_ORIGINS || '').split(',').includes(origin);
     if (!allowed) return json({ error: 'Origin is not allowed.' }, 403);
     const cors = origin ? { 'Access-Control-Allow-Origin': origin, Vary: 'Origin', 'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Client-Id, X-Groq-Key, X-Gemini-Key, X-Zai-Key', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' } : {};

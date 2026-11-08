@@ -1,7 +1,7 @@
 import { solve, sendReport } from './solver.js';
 
-// No page/content-script access to the API key.
-chrome.storage.local.setAccessLevel({ accessLevel: 'TRUSTED_CONTEXTS' });
+// No page/content-script access to the API key (Chrome and Edge; Firefox has no setAccessLevel).
+chrome.storage.local.setAccessLevel?.({ accessLevel: 'TRUSTED_CONTEXTS' });
 const jobs = new Map();
 const lastRequest = new Map();
 const recentReports = new Map();

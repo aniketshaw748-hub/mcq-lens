@@ -38,6 +38,14 @@ try {
   assert.equal(anonymous.status, 200);
   assert.equal((await mf.dispatchFetch('http://localhost/api/me', { headers: { 'X-Client-Id': 'install-abc12345' } }).then(r => r.json())).used, 1);
   assert.equal((await mf.dispatchFetch('http://localhost/api/provider-status')).status, 403);
+  const fromOrigin = origin => mf.dispatchFetch('http://localhost/api/me', { headers: { Origin: origin, 'X-Client-Id': 'install-abc12345' } });
+  assert.equal((await fromOrigin('chrome-extension://abcdefghijklmnopabcdefghijklmnop')).status, 200);
+  const firefox = await fromOrigin('moz-extension://6a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d');
+  assert.equal(firefox.status, 200);
+  assert.equal(firefox.headers.get('access-control-allow-origin'), 'moz-extension://6a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d');
+  assert.equal((await fromOrigin('https://evil.example')).status, 403);
+  assert.equal((await fromOrigin('moz-extension://not-a-uuid')).status, 403);
+  console.log('PASS Chrome/Edge and Firefox extension origins allowed; other sites refused');
   console.log('PASS no access link needed; anonymous install ID keeps its own allowance; owner diagnostics stay private');
   const reservations = await Promise.all(Array.from({ length: 70 }, () => mf.dispatchFetch('http://localhost/test/reserve', { method: 'POST', body: JSON.stringify({ name: 'student:race', limits: { rpm: 1000, rpd: 50, tpm: 1e9, tpd: 1e9, concurrent: 100 } }) }).then(r => r.json())));
   assert.equal(reservations.filter(x => x.id).length, 50);

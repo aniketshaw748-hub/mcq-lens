@@ -1,17 +1,60 @@
 # MCQ Lens
 
+A browser extension that reads the multiple-choice question on your screen and highlights the AI-suggested answer. Free, no account and no API key needed.
+
+## Install
+
+**Download from the [latest release](https://github.com/aniketshaw748-hub/mcq-lens/releases/latest):**
+
+| Browser | File |
+| --- | --- |
+| Chrome, Edge, Brave, Opera | [MCQ-Lens-chrome-edge.zip](https://github.com/aniketshaw748-hub/mcq-lens/releases/latest/download/MCQ-Lens-chrome-edge.zip) |
+| Firefox (128 or newer) | [MCQ-Lens-firefox.zip](https://github.com/aniketshaw748-hub/mcq-lens/releases/latest/download/MCQ-Lens-firefox.zip) |
+
+### Chrome (and Brave, Opera)
+
+1. Download **MCQ-Lens-chrome-edge.zip** and extract it (right-click → Extract All).
+2. Go to `chrome://extensions` and switch on **Developer mode** (top right).
+3. Click **Load unpacked** and pick the extracted folder (the one with `manifest.json` inside).
+4. Click the puzzle icon in the toolbar and pin **MCQ Lens**.
+
+Keep the extracted folder: Chrome loads the extension from it, so deleting or moving the folder removes the extension.
+
+### Microsoft Edge
+
+MCQ Lens is in review for the Edge Add-ons store. Until it's listed:
+
+1. Download **MCQ-Lens-chrome-edge.zip** and extract it.
+2. Go to `edge://extensions` and switch on **Developer mode** (left side).
+3. Click **Load unpacked** and pick the extracted folder.
+4. Click the puzzle icon in the toolbar and pin **MCQ Lens** (the green circle icon).
+
+### Firefox
+
+1. Download **MCQ-Lens-firefox.zip**. Don't extract it.
+2. Go to `about:debugging#/runtime/this-firefox`.
+3. Click **Load Temporary Add-on…** and pick the zip.
+4. Click the puzzle icon in the toolbar to find **MCQ Lens**.
+
+Firefox removes add-ons loaded this way when it closes, so repeat these steps after a restart. Permanent install needs a version signed by Mozilla, which isn't available yet.
+
+### Use it
+
+1. Open a page with a multiple-choice question.
+2. Click the **MCQ Lens** icon → **Enable on this tab**.
+3. The suggested option gets a green outline, with the reasoning in a panel at the bottom right. Go to the next question and it answers again automatically.
+
+Try it on the test page: https://mcq-lens.pages.dev/test. Answers come from AI and can be wrong. MCQ Lens never clicks or submits anything for you. Follow your school's or test platform's rules.
+
+Each install gets 50 free questions a day. For more, add your own free Groq, Gemini or Z.ai key in **Settings** (MCQ Lens icon → Settings & own keys).
+
+## How it works
+
 Shared study app: https://mcq-lens.pages.dev
 
-The Chrome extension now supports the owner's shared AI service. It works straight after install: no access link, account or API key. Settings has an optional place for a user's own Groq, Gemini or Z.ai keys; with any of them, that user's questions run on their keys only, with no MCQ Lens daily cap.
+The extension uses the owner's shared AI service. It works straight after install: no access link, account or API key. Settings has an optional place for a user's own Groq, Gemini or Z.ai keys; with any of them, that user's questions run on their keys only, with no MCQ Lens daily cap.
 
-## Install the extension
-
-1. Extract the extension zip, or use this source folder directly.
-2. Open chrome://extensions, enable Developer mode, and choose Load unpacked.
-3. Select the folder containing manifest.json (C:\Coding\MCQ-Lens for the local source).
-4. Open a question tab, enable MCQ Lens, and choose an area around the question and ALL options.
-
-Only enabled tabs are scanned. Hidden tabs and unfocused windows pause. Reloading or navigating switches scanning off. Scroll removes old highlights and rescans; resize resets the selected area. The shared service reads complete radio-button questions directly from visible page text when possible, including code and all options. This skips the vision provider. Other layouts and image/canvas questions use screenshot reading. Requests are sent only when the selected image changes. Timers and animations may cause extra scans, so keep them outside the selected area. The interval defaults to 10 seconds and is configurable from 6–60 seconds.
+Only enabled tabs are scanned. Hidden tabs and unfocused windows pause. Reloading or navigating switches scanning off. Scrolling moves highlights with their options; a screenshot question is re-read only after scrolling more than half a screen. Resizing resets the selected area. The shared service reads complete radio-button questions directly from visible page text when possible, including code and all options. This skips the vision provider. Other layouts and image/canvas questions use screenshot reading. Requests are sent only when the selected image changes. Timers and animations may cause extra scans, so keep them outside the selected area. The interval defaults to 10 seconds and is configurable from 6–60 seconds.
 
 The shared service permits 50 successful questions per student per UTC day. Every answered changed screenshot counts, including a cached answer. Failed answers refund the daily allowance. Availability depends on the providers' free quotas; the allowance is not a guarantee that all questions can be answered immediately. The extension never clicks or submits answers.
 
