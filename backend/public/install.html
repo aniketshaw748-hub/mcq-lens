@@ -1,20 +1,25 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Install MCQ Lens</title>
-<link rel="icon" href="img/icon.png"><link rel="stylesheet" href="site.css"><script type="module" src="install.js"></script></head>
+<title>Install MCQ Lens</title><meta name="theme-color" content="#0c0e0d">
+<link rel="icon" href="img/icon.png"><link rel="preload" href="fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="site.css"><script src="boot.js"></script><script type="module" src="install.js"></script></head>
 <body>
-<header class="bar"><a class="wordmark" href="/">◎ MCQ Lens</a>
-<nav><a href="/#how">How it works</a><a href="/test">Practice test</a><a href="/install" aria-current="page">Install guide</a><a href="https://github.com/aniketshaw748-hub/mcq-lens" rel="noreferrer">GitHub ↗</a></nav></header>
-<main class="guide">
-  <p class="eyebrow">INSTALL GUIDE</p>
-  <h1 id="title">Install MCQ Lens</h1>
-  <p id="lead" class="lead">Pick your browser and follow the steps. It takes about a minute.</p>
-  <div class="tabs" role="tablist" aria-label="Browser">
-    <button role="tab" id="tab-chrome" data-browser="chrome">Chrome</button>
-    <button role="tab" id="tab-edge" data-browser="edge">Edge</button>
-    <button role="tab" id="tab-brave" data-browser="brave">Brave</button>
-    <button role="tab" id="tab-opera" data-browser="opera">Opera</button>
-    <button role="tab" id="tab-firefox" data-browser="firefox">Firefox</button>
+<header class="nav"><div class="nav-inner">
+  <a class="brand" href="/"><img src="img/icon.png" alt="" width="26" height="26">MCQ Lens</a>
+  <nav class="nav-links" aria-label="Main"><a href="/#how">How it works</a><a href="/test">Practice test</a><a href="/install" aria-current="page">Install guide</a><a href="https://github.com/aniketshaw748-hub/mcq-lens" rel="noreferrer">GitHub</a></nav>
+  <a class="btn btn-ghost" href="/test">Practice test</a>
+</div></header>
+<main class="wrap guide">
+  <div class="guide-intro">
+    <h1 id="title">Install MCQ Lens</h1>
+    <p id="lead" class="lead">Pick your browser and follow the steps. It takes about a minute.</p>
+    <div class="tabs" role="tablist" aria-label="Browser">
+      <button role="tab" id="tab-chrome" data-browser="chrome">Chrome</button>
+      <button role="tab" id="tab-edge" data-browser="edge">Edge</button>
+      <button role="tab" id="tab-brave" data-browser="brave">Brave</button>
+      <button role="tab" id="tab-opera" data-browser="opera">Opera</button>
+      <button role="tab" id="tab-firefox" data-browser="firefox">Firefox</button>
+    </div>
   </div>
   <section id="panel" class="panel" role="tabpanel" tabindex="-1"></section>
   <noscript><p>This guide needs JavaScript. The same steps are in the <a href="https://github.com/aniketshaw748-hub/mcq-lens#install">README on GitHub</a>.</p></noscript>
@@ -23,11 +28,11 @@
     <ol class="steps">
       <li>Open a page with a multiple-choice question. Not sure where? Use the <a href="/test">practice test</a>.</li>
       <li>Click the <b>MCQ Lens</b> icon, then <b>Enable on this tab</b>.</li>
-      <li>The suggested option gets a green outline, with the reasoning in a panel at the bottom right. Go to the next question and it answers again.</li>
+      <li>The suggested option gets a lime outline, with the reasoning in a panel at the bottom right. Go to the next question and it answers again.</li>
     </ol>
     <p class="note">Each install gets 50 free questions a day. For more, add your own free key in <b>Settings &amp; own keys</b> in the MCQ Lens menu. To update later, download the new zip, replace the old folder’s contents and press the reload button on the extension’s card.</p>
   </section>
 </main>
-<footer class="bar"><span>Answers come from AI and can be wrong. Follow your school’s or test platform’s rules.</span>
-<nav><a href="/privacy">Privacy</a><a href="https://github.com/aniketshaw748-hub/mcq-lens/issues" rel="noreferrer">Report a problem</a><a href="https://github.com/aniketshaw748-hub/mcq-lens" rel="noreferrer">GitHub</a></nav></footer>
+<footer class="wrap footer"><span>Answers come from AI and can be wrong.</span>
+<nav aria-label="Footer"><a href="/">Home</a><a href="/privacy">Privacy</a><a href="https://github.com/aniketshaw748-hub/mcq-lens/issues" rel="noreferrer">Report a problem</a><a href="https://github.com/aniketshaw748-hub/mcq-lens" rel="noreferrer">GitHub</a></nav></footer>
 </body></html>

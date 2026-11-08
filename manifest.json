@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MCQ Lens",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "Watch a question on your current tab and highlight AI-suggested answers as it changes.",
   "minimum_chrome_version": "116",
   "icons": {

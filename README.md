@@ -27,7 +27,7 @@ MCQ Lens is in review for the Edge Add-ons store. Until it's listed:
 1. Download **MCQ-Lens-chrome-edge.zip** and extract it.
 2. Go to `edge://extensions` and switch on **Developer mode** (left side).
 3. Click **Load unpacked** and pick the extracted folder.
-4. Click the puzzle icon in the toolbar and pin **MCQ Lens** (the green circle icon).
+4. Click the puzzle icon in the toolbar and pin **MCQ Lens** (the lime circle icon).
 
 ### Firefox
 
@@ -42,7 +42,7 @@ Firefox removes add-ons loaded this way when it closes, so repeat these steps af
 
 1. Open a page with a multiple-choice question.
 2. Click the **MCQ Lens** icon → **Enable on this tab**.
-3. The suggested option gets a green outline, with the reasoning in a panel at the bottom right. Go to the next question and it answers again automatically.
+3. The suggested option gets a lime outline, with the reasoning in a panel at the bottom right. Go to the next question and it answers again automatically.
 
 Try it on the test page: https://mcq-lens.pages.dev/test. Answers come from AI and can be wrong. MCQ Lens never clicks or submits anything for you. Follow your school's or test platform's rules.
 

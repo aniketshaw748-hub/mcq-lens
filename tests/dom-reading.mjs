@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 try {
   const page = await browser.newPage({ viewport: { width: 1200, height: 1100 }, bypassCSP: true });
-  await page.goto('https://mcq-lens.pages.dev/test?src=dom-reading-qa');
+  await page.goto('https://mcq-lens.pages.dev/test?src=dom-reading-qa&order=fixed');
   for (let i = 0; i < 6; i++) await page.locator('#next').click();
   await page.evaluate(() => {
     window.listeners = []; window.scans = [];

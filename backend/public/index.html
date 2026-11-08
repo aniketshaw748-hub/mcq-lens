@@ -1,48 +1,106 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MCQ Lens · The answer, highlighted on the page</title>
-<meta name="description" content="A free browser extension that reads the multiple-choice question on your screen and highlights the suggested answer. No account or API key.">
-<link rel="icon" href="img/icon.png"><link rel="stylesheet" href="site.css"><script type="module" src="site.js"></script></head>
+<title>MCQ Lens · The answer, in focus</title>
+<meta name="description" content="A free browser extension that reads the multiple-choice question on your screen and highlights the suggested answer, with its reasoning. No account or API key.">
+<meta name="theme-color" content="#0c0e0d">
+<link rel="icon" href="img/icon.png"><link rel="preload" href="fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="site.css"><script src="boot.js"></script><script type="module" src="site.js"></script></head>
 <body>
-<header class="bar"><a class="wordmark" href="/">◎ MCQ Lens</a>
-<nav><a href="#how">How it works</a><a href="/test">Practice test</a><a href="/install">Install guide</a><a href="https://github.com/aniketshaw748-hub/mcq-lens" rel="noreferrer">GitHub ↗</a></nav></header>
+<header class="nav"><div class="nav-inner">
+  <a class="brand" href="/"><img src="img/icon.png" alt="" width="26" height="26">MCQ Lens</a>
+  <nav class="nav-links" aria-label="Main"><a href="#how">How it works</a><a href="/test">Practice test</a><a href="/install">Install guide</a><a href="https://github.com/aniketshaw748-hub/mcq-lens" rel="noreferrer">GitHub</a></nav>
+  <a class="btn btn-accent" href="/install?browser=chrome&amp;download=1" data-download>Download</a>
+</div></header>
+
 <main>
-<section class="hero">
-  <div class="pitch">
-    <p class="eyebrow">FREE BROWSER EXTENSION</p>
-    <h1>The answer, highlighted on the page.</h1>
-    <p class="lead">MCQ Lens reads the multiple-choice question on your screen and outlines the suggested option, with the reasoning beside it. Move to the next question and it answers again.</p>
-    <div class="cta"><a id="download" class="primary" href="/install?browser=chrome&amp;download=1" data-download>Download for Chrome <span aria-hidden="true">↓</span></a>
-    <a class="secondary" href="/test">Try the practice test</a></div>
-    <p class="also">Also for <a href="/install?browser=edge&amp;download=1" data-download>Edge</a>, <a href="/install?browser=brave&amp;download=1" data-download>Brave</a>, <a href="/install?browser=opera&amp;download=1" data-download>Opera</a> and <a href="/install?browser=firefox&amp;download=1" data-download>Firefox</a>.</p>
-    <ul class="facts-row"><li>No account</li><li>No API key</li><li>50 free questions a day</li><li>For desktop browsers</li></ul>
+<section class="wrap hero">
+  <div>
+    <h1><span class="line"><span style="--i:0">The answer,</span></span><span class="line"><span style="--i:1">in <em>focus.</em></span></span></h1>
+    <p class="lead reveal" style="--i:3">MCQ Lens reads the question on your screen and highlights the suggested option, with its reasoning. Free, no account.</p>
+    <div class="cta reveal" style="--i:4"><a id="download" class="btn btn-accent" href="/install?browser=chrome&amp;download=1" data-download>Download for Chrome <span class="arrow down" aria-hidden="true">↓</span></a><a class="btn btn-ghost" href="/test">Try the practice test <span class="arrow" aria-hidden="true">→</span></a></div>
+    <p class="also reveal" style="--i:5">Also for <a href="/install?browser=edge&amp;download=1">Edge</a>, <a href="/install?browser=brave&amp;download=1">Brave</a>, <a href="/install?browser=opera&amp;download=1">Opera</a> and <a href="/install?browser=firefox&amp;download=1">Firefox</a>.</p>
   </div>
-  <figure class="shot"><img src="img/highlight.png" width="1018" height="580" alt="MCQ Lens on a practice question: option C is outlined in green with a Suggested answer label, and a panel explains why."></figure>
+  <div class="lens-stage reveal" id="lens" style="--i:2" tabindex="0" role="img" aria-label="Interactive demo. Use the arrow keys to move the lens over the question.">
+    <p class="sr-only">Demo: a lens moves over a practice question about page-table size and shows option C, 4 MiB, outlined as the suggested answer.</p>
+    <div class="layer layer--base" aria-hidden="true"><div class="sheet">
+      <p class="q-meta">Operating systems</p>
+      <p class="q">A 32-bit address space uses 4 KiB pages and 4-byte page-table entries. How big is the page table?</p>
+      <ol><li>A. 1 MiB</li><li>B. 2 MiB</li><li class="answer">C. 4 MiB</li><li>D. 16 MiB</li></ol>
+    </div></div>
+    <div class="layer layer--focus" aria-hidden="true"><div class="sheet">
+      <p class="q-meta">Operating systems</p>
+      <p class="q">A 32-bit address space uses 4 KiB pages and 4-byte page-table entries. How big is the page table?</p>
+      <ol><li>A. 1 MiB</li><li>B. 2 MiB</li><li class="answer">C. 4 MiB</li><li>D. 16 MiB</li></ol>
+    </div></div>
+    <div class="lens-ring" aria-hidden="true"></div>
+    <span class="lens-hint" aria-hidden="true">Move the lens, or use arrow keys</span>
+  </div>
 </section>
 
-<section id="how" class="how">
-  <h2>Three steps.</h2>
-  <ol>
-    <li><span class="num">1</span><h3>Install it</h3><p>Download the zip and load it in your browser. The <a href="/install">install guide</a> walks you through it in under a minute.</p></li>
-    <li><span class="num">2</span><h3>Turn it on for a tab</h3><p>Open a page with a question, click the MCQ Lens icon and choose <b>Enable on this tab</b>.</p></li>
-    <li><span class="num">3</span><h3>Read the suggestion</h3><p>The suggested option gets a green outline. A panel shows the reasoning so you can check it yourself.</p></li>
-  </ol>
+<section class="wrap zoom" aria-label="What MCQ Lens does">
+  <figure>
+    <img src="img/lens-photo.webp" width="1536" height="1024" alt="A glass lens resting on a printed multiple-choice exam. Through the lens, answer C glows lime." loading="lazy">
+  </figure>
+  <figcaption class="reveal"><p class="statement">Everything else stays soft. <span>The suggested option comes into focus, with the reasoning right beside it.</span></p></figcaption>
 </section>
 
-<section class="details">
-  <div><h3>It never clicks for you</h3><p>MCQ Lens only highlights. It doesn’t select or submit anything on the page.</p></div>
-  <div><h3>Only the tab you choose</h3><p>It reads a page only after you enable it there, and stops when you reload, navigate away or switch it off.</p></div>
-  <div><h3>Need more than 50 a day?</h3><p>Add your own free Groq, Gemini or Z.ai key in Settings. Your questions then run on your key with no daily cap.</p></div>
-  <div><h3>Private by design</h3><p>No account needed. A question goes only to the MCQ Lens service and its AI providers, to get the answer. Read the <a href="/privacy">privacy policy</a>.</p></div>
+<section class="wrap section" id="how">
+  <h2 class="section-title reveal">Three steps. About a minute.</h2>
+  <div class="bento">
+    <article class="cell cell-install reveal">
+      <span class="step">Install</span>
+      <img src="img/orb.webp" width="900" height="900" alt="" loading="lazy">
+      <h3>Load it in your browser</h3>
+      <p>Download the zip and follow the guide for your browser. No store account, no sign-up.</p>
+      <div class="browsers"><a class="chip" href="/install?browser=chrome">Chrome</a><a class="chip" href="/install?browser=edge">Edge</a><a class="chip" href="/install?browser=brave">Brave</a><a class="chip" href="/install?browser=opera">Opera</a><a class="chip" href="/install?browser=firefox">Firefox</a></div>
+    </article>
+    <article class="cell cell-popup reveal" style="--i:1">
+      <div><span class="step">Turn on</span><h3>One click per tab</h3><p>Open a page with a question, click the MCQ Lens icon and choose Enable on this tab.</p></div>
+      <img src="img/popup.webp" width="720" height="900" alt="The MCQ Lens toolbar popup with an Enable on this tab button." loading="lazy">
+    </article>
+    <article class="cell cell-photo reveal" style="--i:2">
+      <img src="img/bubbles.webp" width="1000" height="1000" alt="" loading="lazy">
+      <span class="step">Read</span>
+      <h3>See it, then check it</h3>
+      <p>The suggested option is outlined on the page. Next question? It answers again.</p>
+    </article>
+  </div>
 </section>
 
-<section class="practice">
-  <div><p class="eyebrow">PRACTICE TEST</p>
-  <h2>Try it before your next quiz.</h2>
-  <p>Get 25 random questions from a bank of over 200: maths, physics, chemistry, biology, computer science, English, aptitude and general knowledge. At the end you see the answer key, so you can check how the extension did.</p></div>
-  <a class="primary" href="/test">Start a practice test <span aria-hidden="true">→</span></a>
+<section class="wrap section promises">
+  <div class="sticky reveal"><h2 class="section-title">A helper, not a cheat code.</h2><p>It suggests and explains. You decide. Answers come from AI and can be wrong, so follow your school’s or test platform’s rules.</p></div>
+  <div>
+    <div class="promise reveal"><h3>It never clicks for you</h3><p>MCQ Lens only highlights. It doesn’t select or submit anything on the page.</p></div>
+    <div class="promise reveal"><h3>Only the tab you choose</h3><p>It reads a page only after you turn it on there, and stops when you reload, leave or switch it off.</p></div>
+    <div class="promise reveal"><h3>More than 50 a day? Bring a key.</h3><p>Add your own free Groq, Gemini or Z.ai key in Settings and your questions run on it, with no daily cap.</p></div>
+    <div class="promise reveal"><h3>Nothing to sign up for</h3><p>A question goes only to the MCQ Lens service and its AI providers, to get the answer. Read the <a href="/privacy">privacy policy</a>.</p></div>
+  </div>
+</section>
+
+<div class="marquee" aria-hidden="true"><div class="marquee-track">
+  <span>Mathematics</span><i>✦</i><span>Physics</span><i>✦</i><span>Chemistry</span><i>✦</i><span>Biology</span><i>✦</i><span>Computer science</span><i>✦</i><span>English</span><i>✦</i><span>Aptitude</span><i>✦</i><span>General knowledge</span><i>✦</i>
+  <span>Mathematics</span><i>✦</i><span>Physics</span><i>✦</i><span>Chemistry</span><i>✦</i><span>Biology</span><i>✦</i><span>Computer science</span><i>✦</i><span>English</span><i>✦</i><span>Aptitude</span><i>✦</i><span>General knowledge</span><i>✦</i>
+</div></div>
+
+<section class="wrap section" aria-labelledby="practice-title">
+  <div class="practice">
+    <div><p class="eyebrow reveal">Practice test</p><h2 class="reveal" id="practice-title">Try it before your next quiz.</h2></div>
+    <div class="reveal"><p>25 random questions across eight subjects. At the end you get the answer key, so you can check how the extension did.</p><a class="btn btn-accent" href="/test">Start a practice test <span class="arrow" aria-hidden="true">→</span></a></div>
+  </div>
+  <div class="stats">
+    <div class="stat reveal"><b>206</b><span>questions in the practice bank</span></div>
+    <div class="stat reveal" style="--i:1"><b>50</b><span>free questions a day</span></div>
+    <div class="stat reveal" style="--i:2"><b>5</b><span>browsers supported</span></div>
+    <div class="stat reveal" style="--i:3"><b>0</b><span>accounts or API keys needed</span></div>
+  </div>
+</section>
+
+<section class="wrap final">
+  <h2 class="reveal">Get the <em>lens.</em></h2>
+  <div class="final-row reveal"><p>Free for Chrome, Edge, Brave, Opera and Firefox on desktop.</p><a class="btn btn-accent" href="/install?browser=chrome&amp;download=1" data-download>Download for Chrome <span class="arrow down" aria-hidden="true">↓</span></a></div>
 </section>
 </main>
-<footer class="bar"><span>Answers come from AI and can be wrong. Follow your school’s or test platform’s rules.</span>
-<nav><a href="/privacy">Privacy</a><a href="https://github.com/aniketshaw748-hub/mcq-lens/issues" rel="noreferrer">Report a problem</a><a href="https://github.com/aniketshaw748-hub/mcq-lens" rel="noreferrer">GitHub</a></nav></footer>
+
+<footer class="wrap footer"><span>Answers come from AI and can be wrong.</span>
+<nav aria-label="Footer"><a href="/install">Install guide</a><a href="/privacy">Privacy</a><a href="https://github.com/aniketshaw748-hub/mcq-lens/issues" rel="noreferrer">Report a problem</a><a href="https://github.com/aniketshaw748-hub/mcq-lens" rel="noreferrer">GitHub</a></nav></footer>
 </body></html>

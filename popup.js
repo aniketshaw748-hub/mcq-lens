@@ -10,6 +10,7 @@ async function refresh() {
     enabled = state.enabled;
     $('toggle').textContent = enabled ? 'Turn off on this tab' : 'Enable on this tab';
     $('mode').textContent = enabled ? 'WATCHING' : 'OFF';
+    $('mode').classList.toggle('on', enabled);
     $('status').textContent = state.status;
     $('area').disabled = $('scan').disabled = !enabled;
   } catch { $('status').textContent = 'Enable to start watching this tab.'; $('area').disabled = $('scan').disabled = true; }

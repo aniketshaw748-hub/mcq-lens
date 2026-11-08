@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = $PSScriptRoot
 $destination = Join-Path $projectRoot 'dist'
 New-Item -ItemType Directory -Force -Path $destination | Out-Null
-$runtime = @('manifest.json', 'background.js', 'solver.js', 'content.js', 'popup.html', 'popup.js', 'options.html', 'options.js', 'ui.css', 'icons')
+$runtime = @('manifest.json', 'background.js', 'solver.js', 'content.js', 'popup.html', 'popup.js', 'options.html', 'options.js', 'ui.css', 'icons', 'fonts')
 $files = $runtime + @('README.md', 'STORE-READINESS.md', 'package.json', 'package-lock.json', 'package.ps1', 'tests')
 $sources = $files | ForEach-Object { Join-Path $projectRoot $_ }
 $version = (Get-Content -Raw -LiteralPath (Join-Path $projectRoot 'manifest.json') | ConvertFrom-Json).version

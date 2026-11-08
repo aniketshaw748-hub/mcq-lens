@@ -69,6 +69,15 @@ try {
   await page.waitForFunction(() => window.testRoots[0].querySelector('.reason').textContent.includes('Paris'));
   assert.equal(await boxCount(), 1);
   console.log('PASS question changes trigger automatic fresh answers');
+  const folded = () => page.evaluate(() => { const r = window.testRoots[0]; return { reason: getComputedStyle(r.querySelector('.reason')).display, buttons: getComputedStyle(r.querySelector('.buttons')).display, status: getComputedStyle(r.querySelector('.status')).display, label: r.querySelector('#fold').textContent, expanded: r.querySelector('#fold').getAttribute('aria-expanded'), boxes: r.querySelectorAll('.box').length }; });
+  await page.evaluate(() => window.testRoots[0].querySelector('#fold').click());
+  const min = await folded();
+  assert.deepEqual([min.reason, min.buttons, min.label, min.expanded], ['none', 'none', 'Expand', 'false']);
+  assert.notEqual(min.status, 'none'); assert.ok(min.boxes > 0, 'highlight stays while minimized');
+  await page.evaluate(() => window.testRoots[0].querySelector('#fold').click());
+  const max = await folded();
+  assert.deepEqual([max.reason === 'none', max.label, max.expanded], [false, 'Minimize', 'true']);
+  console.log('PASS Minimize folds the panel to its status line, keeps the highlight, and Expand restores it');
 
   await mkdir(new URL('../test-results/', import.meta.url), { recursive: true });
   await page.screenshot({ path: new URL('../test-results/highlight.png', import.meta.url).pathname.replace(/^\/(\w:)/, '$1') });
