@@ -51,11 +51,14 @@ try {
   assert.equal(await page.evaluate(() => window.calls.filter(x => x === 'SOLVE').length), initialRequests);
   console.log('PASS unchanged screenshots use no new API request');
 
-  const boxTop = () => page.evaluate(() => parseFloat(window.testRoots[0].querySelector('.box').style.top));
-  const labelTop = () => page.evaluate(() => document.querySelectorAll('label')[1].getBoundingClientRect().top);
+  // The mark is a dot on the option's radio button; after scrolling it must still sit on that radio.
+  const dotOnRadio = () => page.evaluate(() => {
+    const dot = window.testRoots[0].querySelector('.box').getBoundingClientRect(), radio = document.querySelectorAll('label')[1].querySelector('input').getBoundingClientRect();
+    return Math.hypot(dot.left + dot.width / 2 - radio.left - radio.width / 2, dot.top + dot.height / 2 - radio.top - radio.height / 2) < 2;
+  });
   await page.mouse.wheel(0, 150); await page.waitForTimeout(1800);
   assert.equal(await page.evaluate(() => window.calls.filter(x => x === 'SOLVE').length), initialRequests);
-  assert.equal(await boxCount(), 1); assert.ok(Math.abs(await boxTop() - await labelTop()) < 2);
+  assert.equal(await boxCount(), 1); assert.ok(await dotOnRadio(), 'the dot stays on the option’s radio button');
   console.log('PASS scrolling moves the highlight with its option and does not re-read');
   await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(500);
   await page.evaluate(() => { window.unfocused = true; });
@@ -78,7 +81,7 @@ try {
   await page.evaluate(() => window.testRoots[0].querySelector('#hide').click());
   assert.equal((await panel()).open, false);
   assert.equal((await state()).enabled, true, 'hiding the panel does not turn MCQ Lens off');
-  console.log('PASS no window by default: highlight only; the shortcut shows the reasoning and × hides it');
+  console.log('PASS no window by default: highlight only; the shortcut shows the reasoning and the hide button hides it');
 
   await mkdir(new URL('../test-results/', import.meta.url), { recursive: true });
   await page.screenshot({ path: new URL('../test-results/highlight.png', import.meta.url).pathname.replace(/^\/(\w:)/, '$1') });

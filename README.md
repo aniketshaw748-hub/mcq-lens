@@ -42,7 +42,7 @@ Firefox removes add-ons loaded this way when it closes, so repeat these steps af
 
 1. Open a page with a multiple-choice question.
 2. Click the **MCQ Lens** icon → **Enable on this tab**.
-3. The suggested option is outlined. Press **Alt+Shift+Y** on the page to see the reasoning (change the shortcut at `chrome://extensions/shortcuts`). The toolbar icon shows ✓ when answered and ! when something needs attention. Go to the next question and it answers again automatically.
+3. A small dot marks the suggested option. Press **Alt+Shift+Y** on the page to see the reasoning (change the shortcut at `chrome://extensions/shortcuts`). The toolbar icon shows ✓ when answered and ! when something needs attention. Go to the next question and it answers again automatically.
 
 Try it on the test page: https://mcq-lens.pages.dev/test. Answers come from AI and can be wrong. MCQ Lens never clicks or submits anything for you. Follow your school's or test platform's rules.
 

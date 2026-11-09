@@ -51,9 +51,11 @@ try {
     const overlap = await page.evaluate(option => {
       const box = window.testRoot.querySelector('.box').getBoundingClientRect();
       const row = document.querySelectorAll('#options label')[option].getBoundingClientRect();
-      return Math.max(0, Math.min(box.bottom, row.bottom) - Math.max(box.top, row.top)) / row.height;
+      // The mark is a dot on the option's radio button: its centre must sit inside the correct row.
+      const cx = box.left + box.width / 2, cy = box.top + box.height / 2;
+      return cx > row.left && cx < row.right && cy > row.top && cy < row.bottom ? 1 : 0;
     }, item.correctOption);
-    assert.ok(overlap > 0.9, 'Highlight must be on the calculated correct row.');
+    assert.ok(overlap === 1, 'The mark must be on the calculated correct row.');
     await mkdir('test-results', { recursive: true });
     await page.screenshot({ path: `test-results/hard-mcq-q${item.number}.png`, fullPage: true });
     console.log(JSON.stringify({ question: item.number, status: 'PASS', provider: last.result.provider, model: last.result.model, selected: last.result.questions[0].answers[0].text, highlightedOptions: 1, rowOverlap: overlap, elapsedMs: last.elapsedMs }));

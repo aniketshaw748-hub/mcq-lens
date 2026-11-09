@@ -7,6 +7,7 @@
   host.id = 'mcq-lens-overlay';
   host.style.cssText = 'all:initial;position:fixed;inset:0;z-index:2147483647;pointer-events:none';
   const root = host.attachShadow({ mode: 'closed' });
+  // Hide icon: Lucide "eye-off" (ISC licence, https://lucide.dev).
   root.innerHTML = `<style>
     :host{--bg:#fff;--text:#111;--muted:#5f5f5c;--line:#e8e8e6;--mark:#1f9d55;--warn:#b7791f;font:13px/1.5 'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif;color:var(--text)}
     @media (prefers-color-scheme:dark){:host{--bg:#161616;--text:#ededed;--muted:#a0a0a0;--line:#2a2a2a;--mark:#3ecf7a;--warn:#e0a84a}}
@@ -14,12 +15,11 @@
     .top{display:flex;align-items:center;justify-content:space-between}.name{font-weight:600}.status{margin-top:2px;font-size:12px;color:var(--muted)}
     .reason{max-height:150px;overflow:auto;font-size:12.5px;scrollbar-width:thin}.reason:not(:empty){margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.reason p{margin:0 0 8px;color:var(--muted)}.reason p:last-child{margin:0}.reason strong{color:var(--text);font-weight:600}
     button{font:500 12px/1 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;border:1px solid var(--line);background:transparent;border-radius:6px;padding:7px 10px;cursor:pointer;color:var(--text)}button:hover{border-color:var(--muted)}button:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-    #hide{border:0;padding:2px 6px;font-size:18px;line-height:1;color:var(--muted)}#hide:hover{color:var(--text)}
+    #hide{display:grid;place-items:center;border:0;padding:4px;border-radius:6px;color:var(--muted)}#hide:hover{color:var(--text);background:color-mix(in srgb,var(--text) 6%,transparent)}
     .report{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.report textarea{box-sizing:border-box;width:100%;min-height:64px;font:12.5px/1.5 'Segoe UI',system-ui,sans-serif;color:var(--text);background:transparent;border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}.report textarea:focus{outline:none;border-color:var(--muted)}.report label{display:flex;gap:8px;align-items:center;font-size:12px;margin:8px 0;color:var(--muted)}.report .buttons{display:flex;gap:6px}#send{background:var(--text);border-color:var(--text);color:var(--bg)}
-    .box{position:fixed;box-sizing:border-box;border:2px solid var(--mark);border-radius:8px;background:color-mix(in srgb,var(--mark) 8%,transparent);pointer-events:none}.box.low{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,transparent)}
-    .box span{position:absolute;top:-22px;left:-2px;background:var(--mark);color:#fff;padding:2px 7px;border-radius:5px;white-space:nowrap;font:600 11px/1.4 'Segoe UI',system-ui,sans-serif}.box.low span{background:var(--warn)}
+    .box{position:fixed;box-sizing:border-box;border-radius:50%;background:var(--mark);box-shadow:0 0 0 3px color-mix(in srgb,var(--mark) 25%,transparent);pointer-events:none}.box.low{background:var(--warn);box-shadow:0 0 0 3px color-mix(in srgb,var(--warn) 25%,transparent)}
     .region{position:fixed;box-sizing:border-box;border:1.5px dashed var(--mark);border-radius:8px;pointer-events:none}.veil{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;background:rgba(0,0,0,.3);touch-action:none}.selection{position:fixed;border:2px solid #fff;border-radius:6px;background:rgba(255,255,255,.1);pointer-events:none}.hint{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--bg);color:var(--text);border:1px solid var(--line);padding:10px 16px;border-radius:10px;font:13px 'Segoe UI',system-ui,sans-serif;pointer-events:none}
-  </style><div id="marks"></div><div class="hud" hidden><div class="top"><span class="name">MCQ Lens</span><button id="hide" aria-label="Hide the reasoning" title="Hide (Alt+Shift+Y)">×</button></div><div class="status" role="status"></div><div class="reason"></div><form class="report" hidden><textarea id="note" maxlength="2000" placeholder="What went wrong? (no personal details)"></textarea><label><input id="shot" type="checkbox"> Include a screenshot of the question area</label><div class="buttons"><button id="send" type="submit">Send report</button><button id="cancel" type="button">Cancel</button></div></form></div>`;
+  </style><div id="marks"></div><div class="hud" hidden><div class="top"><span class="name">MCQ Lens</span><button id="hide" aria-label="Hide the reasoning" title="Hide (Alt+Shift+Y)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg></button></div><div class="status" role="status"></div><div class="reason"></div><form class="report" hidden><textarea id="note" maxlength="2000" placeholder="What went wrong? (no personal details)"></textarea><label><input id="shot" type="checkbox"> Include a screenshot of the question area</label><div class="buttons"><button id="send" type="submit">Send report</button><button id="cancel" type="button">Cancel</button></div></form></div>`;
   const marks = root.querySelector('#marks'), hud = root.querySelector('.hud'), reasons = root.querySelector('.reason');
   const setStatus = text => { status = text; root.querySelector('.status').textContent = text; };
   // A short log of what the extension did, sent with bug reports. Steps only: never question text or page content.
@@ -34,10 +34,14 @@
   const docText = () => (document.body || document.documentElement).innerText.slice(0, 200000);
   const questionKey = questions => JSON.stringify(questions.map(q => [q.question, q.options.map(o => o.text)]));
   // Highlights follow their option on the page (or their page position) instead of forcing a re-read.
+  // The mark is one dot: over the option's own radio button when it has one, else at the option's left edge.
   function reposition() {
     for (const mark of placed) {
-      const r = mark.target?.isConnected ? mark.target.getBoundingClientRect() : { left: mark.x - scrollX, top: mark.y - scrollY, width: mark.w, height: mark.h };
-      mark.box.style.cssText = `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`;
+      const radio = mark.radio?.isConnected && mark.radio.getBoundingClientRect();
+      const r = radio && radio.width ? radio : mark.target?.isConnected ? mark.target.getBoundingClientRect() : { left: mark.x - scrollX, top: mark.y - scrollY, width: mark.w, height: mark.h };
+      const size = radio && radio.width ? Math.max(radio.width, radio.height) + 6 : 18;
+      const x = radio && radio.width ? r.left + r.width / 2 : r.left + 16, y = r.top + r.height / 2;
+      mark.box.style.cssText = `left:${x - size / 2}px;top:${y - size / 2}px;width:${size}px;height:${size}px`;
     }
   }
   function schedule(delay = interval) {
@@ -149,9 +153,11 @@
         }).sort((a, b) => a.distance - b.distance);
         const box = document.createElement('div');
         box.className = `box${q.confidence === 'high' ? '' : ' low'}`;
-        placed.push({ box, target: matches[0]?.element, x: predicted.x + origin.x, y: predicted.y + origin.y, w: predicted.w, h: predicted.h });
-        const label = document.createElement('span'); label.textContent = q.confidence === 'high' ? 'Suggested answer' : `Uncertain · ${q.confidence}`;
-        box.append(label); marks.append(box); count++;
+        const target = matches[0]?.element;
+        const radio = target && (target.matches('input[type="radio"],[role="radio"]') ? target : target.querySelector('input[type="radio"],[role="radio"]'));
+        placed.push({ box, target, radio, x: predicted.x + origin.x, y: predicted.y + origin.y, w: predicted.w, h: predicted.h });
+        box.title = q.confidence === 'high' ? 'Suggested answer' : `Suggested answer (${q.confidence} confidence)`;
+        marks.append(box); count++;
       }
     }
     reposition();
