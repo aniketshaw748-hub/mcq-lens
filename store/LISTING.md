@@ -35,7 +35,7 @@ How it works:
 • MCQ Lens reads the visible question and its options. For normal web pages it reads the text directly; for questions shown as images it reads a screenshot of the visible tab or an area you choose.
 • It highlights the suggested option on the page and shows the reasoning in a small panel. It never clicks, selects or submits anything.
 • When the question changes (for example after "Next"), it reads the new question automatically. Scrolling or switching tabs does not trigger new reads.
-• "Choose area" limits reading to the question, which also keeps unrelated information out.
+• "Select area" in the toolbar menu limits reading to the question, which also keeps unrelated information out.
 
 No sign-up or setup: each browser gets 50 free questions a day from the MCQ Lens service. You can add your own free Groq, Google Gemini or Z.ai API key in Settings to use your own provider limits instead.
 
@@ -51,6 +51,6 @@ No account or login is needed. Test page with practice questions: https://mcq-le
 2. Click the MCQ Lens toolbar button, then "Enable on this tab".
 3. Within a few seconds the suggested option is outlined in green and the panel (bottom right) shows the explanation.
 4. Click "Next question" on the page: the highlight clears and the new question is answered automatically.
-5. Settings (toolbar popup → "Settings & own keys") shows the optional API-key fields; they are not needed for testing.
+5. Settings (toolbar popup → "Settings") shows the optional API-key fields; they are not needed for testing.
 6. "Report a problem" in the page panel sends a bug report (a note, and a screenshot of the question area only if ticked). Automatic error reports contain no question text and can be switched off in Settings.
 The answer service at https://mcq-lens.pages.dev is live. Each install gets 50 free questions per day.

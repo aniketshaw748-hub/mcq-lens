@@ -69,15 +69,9 @@ try {
   await page.waitForFunction(() => window.testRoots[0].querySelector('.reason').textContent.includes('Paris'));
   assert.equal(await boxCount(), 1);
   console.log('PASS question changes trigger automatic fresh answers');
-  const folded = () => page.evaluate(() => { const r = window.testRoots[0]; return { reason: getComputedStyle(r.querySelector('.reason')).display, buttons: getComputedStyle(r.querySelector('.buttons')).display, status: getComputedStyle(r.querySelector('.status')).display, label: r.querySelector('#fold').textContent, expanded: r.querySelector('#fold').getAttribute('aria-expanded'), boxes: r.querySelectorAll('.box').length }; });
-  await page.evaluate(() => window.testRoots[0].querySelector('#fold').click());
-  const min = await folded();
-  assert.deepEqual([min.reason, min.buttons, min.label, min.expanded], ['none', 'none', 'Expand', 'false']);
-  assert.notEqual(min.status, 'none'); assert.ok(min.boxes > 0, 'highlight stays while minimized');
-  await page.evaluate(() => window.testRoots[0].querySelector('#fold').click());
-  const max = await folded();
-  assert.deepEqual([max.reason === 'none', max.label, max.expanded], [false, 'Minimize', 'true']);
-  console.log('PASS Minimize folds the panel to its status line, keeps the highlight, and Expand restores it');
+  // The panel has no action buttons: just the answer, the reasoning and a close control.
+  assert.deepEqual(await page.evaluate(() => [...window.testRoots[0].querySelectorAll('.hud > .top button, .hud > button, .hud .buttons:not(.report .buttons) button')].map(b => b.id)), ['off']);
+  console.log('PASS panel shows only the answer, reasoning and a close button');
 
   await mkdir(new URL('../test-results/', import.meta.url), { recursive: true });
   await page.screenshot({ path: new URL('../test-results/highlight.png', import.meta.url).pathname.replace(/^\/(\w:)/, '$1') });
@@ -86,6 +80,10 @@ try {
   await waitStatus('1 suggested');
   assert.ok(await page.evaluate(() => parseFloat(window.testRoots[0].querySelector('.box').style.left) >= 70));
   console.log('PASS question-area selection and crop coordinate mapping');
+  assert.equal((await state()).cropped, true);
+  await page.evaluate(() => window.dispatchExtension({ type: 'FULL' }));
+  assert.equal((await state()).cropped, false);
+  console.log('PASS popup can switch back from a selected area to the full page');
 
   const beforeImageChange = await page.evaluate(() => window.calls.filter(x => x === 'SOLVE').length);
   await page.evaluate(() => { window.imageOverride = window.image1; });
@@ -117,11 +115,11 @@ try {
   assert.ok(!/capital|France|2 \+ 2|appeared/.test(JSON.stringify(autoReport)));
   console.log('PASS a real error sends an automatic report with the extension steps and no question text');
 
-  await page.evaluate(() => { window.testRoots[0].querySelector('#report').click(); window.testRoots[0].querySelector('#note').value = 'Highlighted the wrong option'; window.testRoots[0].querySelector('#shot').checked = true; window.testRoots[0].querySelector('#send').click(); });
+  await page.evaluate(() => { window.dispatchExtension({ type: 'REPORT_FORM' }); window.testRoots[0].querySelector('#note').value = 'Highlighted the wrong option'; window.testRoots[0].querySelector('#shot').checked = true; window.testRoots[0].querySelector('#send').click(); });
   await waitStatus('report #2 sent');
   const userReport = await page.evaluate(() => window.reports[1]);
   assert.equal(userReport.kind, 'user'); assert.equal(userReport.note, 'Highlighted the wrong option'); assert.ok(userReport.screenshot.length > 1000);
-  await page.evaluate(() => { window.testRoots[0].querySelector('#report').click(); window.testRoots[0].querySelector('#note').value = 'No screenshot please'; window.testRoots[0].querySelector('#send').click(); });
+  await page.evaluate(() => { window.dispatchExtension({ type: 'REPORT_FORM' }); window.testRoots[0].querySelector('#note').value = 'No screenshot please'; window.testRoots[0].querySelector('#send').click(); });
   await waitStatus('report #3 sent');
   assert.equal(await page.evaluate(() => window.reports[2].screenshot), '');
   console.log('PASS Report a problem sends the note, and a screenshot only when ticked');

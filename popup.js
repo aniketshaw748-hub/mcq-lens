@@ -1,19 +1,22 @@
 const $ = id => document.getElementById(id);
 let tab;
-let enabled = false;
+let enabled = false, cropped = false;
 async function send(type, extra = {}) {
   return chrome.tabs.sendMessage(tab.id, { type, ...extra });
 }
+function show(state) {
+  enabled = Boolean(state?.enabled); cropped = Boolean(state?.cropped);
+  $('toggle').textContent = enabled ? 'Turn off on this tab' : 'Enable on this tab';
+  $('toggle').classList.toggle('primary', !enabled);
+  $('mode').textContent = enabled ? 'On' : 'Off';
+  $('mode').classList.toggle('on', enabled);
+  $('status').textContent = state?.status || 'It reads each question by itself once it’s on.';
+  // Area and reports only make sense while the tab is being watched.
+  $('area').disabled = $('report').disabled = !enabled;
+  $('area').textContent = cropped ? 'Use full page' : 'Select area';
+}
 async function refresh() {
-  try {
-    const state = await send('STATE');
-    enabled = state.enabled;
-    $('toggle').textContent = enabled ? 'Turn off on this tab' : 'Enable on this tab';
-    $('mode').textContent = enabled ? 'WATCHING' : 'OFF';
-    $('mode').classList.toggle('on', enabled);
-    $('status').textContent = state.status;
-    $('area').disabled = $('scan').disabled = !enabled;
-  } catch { $('status').textContent = 'Enable to start watching this tab.'; $('area').disabled = $('scan').disabled = true; }
+  try { show(await send('STATE')); } catch { show(null); }
 }
 $('settings').onclick = () => chrome.runtime.openOptionsPage();
 $('toggle').onclick = async () => {
@@ -27,6 +30,7 @@ $('toggle').onclick = async () => {
   } catch (error) { $('status').textContent = error.message; }
   finally { $('toggle').disabled = false; }
 };
-$('area').onclick = async () => { await send('AREA'); window.close(); };
-$('scan').onclick = async () => { await send('SCAN'); await refresh(); };
+// Selecting an area and reporting happen on the page itself, so the popup closes.
+$('area').onclick = async () => { await send(cropped ? 'FULL' : 'AREA'); window.close(); };
+$('report').onclick = async () => { await send('REPORT_FORM'); window.close(); };
 chrome.tabs.query({ active: true, currentWindow: true }).then(tabs => { tab = tabs[0]; refresh(); });

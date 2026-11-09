@@ -27,7 +27,8 @@ try {
   await page.locator('#interval').fill('8');
   await page.getByRole('button', { name: 'Save keys' }).click();
   await page.getByRole('status').filter({ hasText: 'Saved.' }).waitFor();
-  await page.getByRole('button', { name: 'Save check interval' }).click();
+  await page.locator('#interval').dispatchEvent('change');
+  await page.locator('#interval-status').filter({ hasText: 'Saved.' }).waitFor();
   const settings = await page.evaluate(() => chrome.storage.local.get(['groqKey', 'geminiKey', 'interval']));
   assert.equal(settings.groqKey, 'gsk_test-key-not-real'); assert.equal(settings.geminiKey, undefined); assert.equal(settings.interval, 8);
   await page.getByRole('button', { name: 'Show keys' }).click();

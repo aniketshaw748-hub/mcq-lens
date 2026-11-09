@@ -46,7 +46,7 @@ Firefox removes add-ons loaded this way when it closes, so repeat these steps af
 
 Try it on the test page: https://mcq-lens.pages.dev/test. Answers come from AI and can be wrong. MCQ Lens never clicks or submits anything for you. Follow your school's or test platform's rules.
 
-Each install gets 50 free questions a day. For more, add your own free Groq, Gemini or Z.ai key in **Settings** (MCQ Lens icon → Settings & own keys).
+Each install gets 50 free questions a day. For more, add your own free Groq, Gemini or Z.ai key in **Settings** (MCQ Lens icon → Settings).
 
 ## How it works
 

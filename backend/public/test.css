@@ -1,54 +1,49 @@
-/* Practice test, on top of site.css tokens. Everything is scoped to .quiz-wrap so the header nav is untouched. */
-.quiz-wrap{max-width:860px;margin:0 auto;padding:clamp(36px,7vh,80px) var(--gutter) 40px}
-.quiz-wrap .heading{display:flex;justify-content:space-between;align-items:end;gap:20px}
-.quiz-wrap h1{font-size:clamp(36px,5vw,64px);line-height:.98;letter-spacing:-.05em;font-weight:620;margin:0}
-.quiz-wrap .eyebrow{margin-bottom:16px}
-#counter{font:500 13px/1 'Geist Mono',monospace;color:var(--muted);white-space:nowrap;margin:0 0 6px}
-.progress{height:3px;background:var(--line);border-radius:3px;margin:26px 0 34px;overflow:hidden}
-#progress-fill{height:100%;width:4%;background:var(--accent);border-radius:3px;transition:width .5s var(--ease)}
-#question-panel{border-radius:var(--r-surface);border:1px solid var(--line);background:var(--surface);padding:clamp(22px,3vw,40px)}
-#subject{font:500 12px/1 'Geist Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text);margin:0 0 16px}
-#question{font-size:clamp(20px,2.1vw,27px);line-height:1.4;font-weight:560;letter-spacing:-.02em;margin:0 0 24px;white-space:pre-wrap}
+/* Practice test, on top of site.css tokens. Scoped to .quiz-wrap so the header is untouched. */
+.quiz-wrap{max-width:760px;margin:0 auto;padding:clamp(40px,8vh,72px) var(--gutter) 0}
+.quiz-wrap .heading{display:flex;justify-content:space-between;align-items:baseline;gap:20px}
+.quiz-wrap h1{font-size:clamp(28px,3.4vw,36px)}
+#counter{font:500 13px/1 'Geist Mono',monospace;color:var(--faint);white-space:nowrap;margin:0}
+.progress{height:2px;background:var(--line);margin:20px 0 32px;overflow:hidden}
+#progress-fill{height:100%;width:4%;background:var(--text);transition:width .3s ease}
+#subject{font-size:13px;color:var(--faint);margin:0 0 10px}
+#question{font-size:clamp(19px,2vw,22px);line-height:1.45;font-weight:500;letter-spacing:-.015em;margin:0 0 22px;white-space:pre-wrap}
 #question:focus{outline:none}
-.quiz-wrap pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--bg-2);border:1px solid var(--line);padding:16px 18px;border-radius:14px;font:14px/1.7 'Geist Mono',monospace;margin:0 0 22px;color:var(--text)}
-#options{padding:0;margin:0;border:0;display:grid;gap:10px}
-#options label{display:flex;align-items:center;gap:14px;padding:15px 18px;border:1px solid var(--line-2);border-radius:14px;background:var(--bg-2);cursor:pointer;font-size:16px;min-height:56px;transition:border-color .2s,background .2s}
-#options label:hover{border-color:var(--text)}
-#options label:has(input:checked){background:var(--accent-soft);border-color:var(--accent)}
-#options input{accent-color:var(--accent);width:18px;height:18px;flex-shrink:0;margin:0}
+.quiz-wrap pre{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface);border:1px solid var(--line);padding:14px 16px;border-radius:var(--r);font:13.5px/1.7 'Geist Mono',monospace;margin:0 0 20px;color:var(--text)}
+#options{padding:0;margin:0;border:0;display:grid;gap:8px}
+#options label{display:flex;align-items:center;gap:12px;padding:13px 16px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);cursor:pointer;font-size:15px;min-height:50px}
+#options label:hover{border-color:var(--line-2)}
+#options label:has(input:checked){border-color:var(--text)}
+#options input{accent-color:var(--text);width:16px;height:16px;flex-shrink:0;margin:0}
 #options span{white-space:pre-wrap}
-.quiz-wrap nav{display:flex;justify-content:space-between;gap:12px;margin-top:22px}
-.quiz-wrap nav button,#restart{font:600 15px/1 Geist,sans-serif;border:1px solid var(--line-2);border-radius:var(--r-control);height:50px;padding:0 20px;background:transparent;color:var(--text);cursor:pointer;transition:border-color .2s,background .2s,transform .2s var(--ease)}
+.quiz-wrap nav{display:flex;justify-content:space-between;gap:12px;margin-top:24px}
+.quiz-wrap nav button{font:500 14px/1 Geist,sans-serif;border:1px solid var(--line-2);border-radius:var(--r);height:40px;padding:0 16px;background:transparent;color:var(--text);cursor:pointer}
 .quiz-wrap nav button:hover{border-color:var(--text)}
-.quiz-wrap nav button:active{transform:translateY(1px) scale(.98)}
-#next{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);min-width:180px}
-#next:hover{background:#d6f76e}
+#next{background:var(--solid);border-color:var(--solid);color:var(--solid-ink)}
+#next:hover{opacity:.85}
 .quiz-wrap button:disabled{opacity:.35;cursor:default}
-.bottom{display:flex;align-items:center;justify-content:space-between;margin-top:14px;font:500 12px/1 'Geist Mono',monospace;color:var(--faint)}
-#restart{height:auto;padding:4px 0;border:0;font:500 13px/1 Geist,sans-serif;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
-.quiz-wrap .note{font-size:14px;line-height:1.7;color:var(--muted);margin:22px 0 0}
-.quiz-wrap footer{font-size:13px;line-height:1.7;color:var(--faint);margin-top:28px;padding-top:22px;border-top:1px solid var(--line)}
+.bottom{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font:500 12px/1 'Geist Mono',monospace;color:var(--faint)}
+#restart{border:0;padding:4px 0;background:none;font:400 13px/1 Geist,sans-serif;color:var(--muted);cursor:pointer}
+#restart:hover{color:var(--text);text-decoration:underline;text-underline-offset:3px}
+.quiz-wrap .note{font-size:13px;color:var(--faint);margin:24px 0 0}
+.quiz-wrap footer{font-size:13px;color:var(--faint);margin:48px 0 40px;padding-top:20px;border-top:1px solid var(--line)}
 .quiz-wrap footer a{color:var(--muted)}
-#results h1{font-size:clamp(40px,6vw,76px);margin:0 0 12px}
+#results h1{margin:0 0 8px}
 #results h1:focus{outline:none}
-.result-actions{display:flex;flex-wrap:wrap;gap:10px;margin:24px 0 32px}
-#review-list{list-style:none;padding:0;margin:0;display:grid;gap:12px}
-#review-list li{border:1px solid var(--line);border-radius:18px;padding:20px 22px;background:var(--surface)}
-#review-list li.right{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 45%,transparent)}
-#review-list li.wrong{background:rgba(255,112,84,.08);border-color:rgba(255,112,84,.35)}
-#review-list p{margin:0 0 6px}
-#review-list .meta{font:500 12px/1.4 'Geist Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-text)}
-#review-list li.wrong .meta,#review-list .yours{color:#ff8a6e}
-#review-list li.skipped .meta{color:var(--faint)}
-#review-list .q{font-weight:600;font-size:17px;letter-spacing:-.01em}
+.result-actions{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 28px}
+#review-list{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+#review-list li{border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;background:var(--surface)}
+#review-list p{margin:0 0 4px}
+#review-list .meta{font-size:12px;color:var(--faint)}
+#review-list li.right .meta{color:var(--mark)}
+#review-list li.wrong .meta,#review-list .yours{color:#c2410c}
+#review-list .q{font-weight:500}
 #review-list .yours{margin:0}
-#review-list pre{margin:8px 0 12px;font-size:13px}
-@media (prefers-color-scheme:light){#review-list li.wrong .meta,#review-list .yours{color:#b3361b}#next:hover{background:#bfe63a}}
-@media (max-width:600px){
-  .quiz-wrap .heading{flex-direction:column;align-items:start;gap:10px}
-  #options label{padding:13px 14px}
-  .quiz-wrap nav button{padding:0 14px}
-  #next{min-width:0;flex:1}
-}
+#review-list pre{margin:8px 0 10px;font-size:13px}
+@media (prefers-color-scheme:dark){#review-list li.wrong .meta,#review-list .yours{color:#fb923c}}
 /* Leave the bottom-right corner free for the MCQ Lens panel on wide screens. */
-@media (min-width:1180px){.quiz-wrap{margin-left:max(var(--gutter),calc((100vw - 860px)/2 - 200px))}}
+@media (min-width:1180px){.quiz-wrap{margin-left:max(var(--gutter),calc((100vw - 760px)/2 - 180px))}}
+@media (max-width:600px){
+  #options label{padding:12px 14px}
+  .quiz-wrap nav button{padding:0 14px}
+  #next{flex:1}
+}

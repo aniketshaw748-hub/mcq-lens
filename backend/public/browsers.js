@@ -7,7 +7,7 @@ const chromium = (name, page, toggle) => ({
     `Open <code>${page}</code> in a new tab. Copy the address with the button and paste it into the address bar; a web page can’t open it for you.`,
     `Switch on <b>Developer mode</b> (${toggle}).`,
     'Click <b>Load unpacked</b> and choose the extracted <b>MCQ-Lens-chrome-edge</b> folder (the one with <code>manifest.json</code> inside).',
-    'Click the puzzle-piece icon in the toolbar and pin <b>MCQ Lens</b> (the lime circle).'
+    'Click the puzzle-piece icon in the toolbar and pin <b>MCQ Lens</b>.'
   ],
   note: 'Keep the extracted folder. The browser loads MCQ Lens from it, so deleting or moving the folder removes the extension.'
 });

@@ -26,8 +26,9 @@ $('auto-reports').onchange = async () => {
   await chrome.storage.local.set({ autoReports: $('auto-reports').checked });
   $('reports-status').textContent = $('auto-reports').checked ? 'Automatic error reports are on.' : 'Automatic error reports are off. You can still send a report yourself.';
 };
-$('save-interval').onclick = async () => {
+// Saves as soon as the value changes; there is no separate save button.
+$('interval').onchange = async () => {
   const interval = Number($('interval').value);
   if (!Number.isFinite(interval) || interval < 6 || interval > 60) { $('interval-status').textContent = 'Choose 6–60 seconds.'; return; }
-  await chrome.storage.local.set({ interval }); $('interval-status').textContent = 'Saved. Re-enable the tab to use this interval.';
+  await chrome.storage.local.set({ interval }); $('interval-status').textContent = 'Saved. Applies the next time you turn MCQ Lens on.';
 };

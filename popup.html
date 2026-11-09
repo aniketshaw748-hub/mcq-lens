@@ -1,9 +1,8 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MCQ Lens</title><link rel="stylesheet" href="ui.css"></head>
-<body class="popup"><header><img class="mark" src="icons/icon48.png" alt="" width="34" height="34"><strong>MCQ Lens</strong><span id="mode" class="state">OFF</span></header>
-<main><h1>The answer, <em>in focus.</em></h1><p class="lead">Turn it on for this tab. It watches for questions and highlights the suggested option.</p>
-<button id="toggle" class="primary">Enable on this tab</button><p id="status" role="status">Checking this tab…</p>
-<div class="actions"><button id="area">Choose question area</button><button id="scan">Scan now</button></div>
-<p class="fine">While on, the question text or a screenshot of this tab (or the area you choose) goes to the MCQ Lens service and its AI providers. Answers can be wrong. Nothing is clicked for you.</p></main>
-<footer><button id="settings" class="link">Settings &amp; own keys <span aria-hidden="true">↗</span></button><a class="link" href="https://mcq-lens.pages.dev/test" target="_blank" rel="noreferrer">Practice test <span aria-hidden="true">↗</span></a></footer>
+<body class="popup">
+<header><img class="mark" src="icons/icon32.png" alt="" width="20" height="20"><strong>MCQ Lens</strong><span id="mode" class="state">Off</span></header>
+<main><button id="toggle" class="primary">Enable on this tab</button><p id="status" role="status">Checking this tab…</p>
+<p class="fine">Questions on this tab go to the MCQ Lens service to get an answer. Answers can be wrong.</p></main>
+<footer><button id="area" class="link" disabled>Select area</button><button id="report" class="link" disabled>Report a problem</button><button id="settings" class="link">Settings</button></footer>
 <script src="popup.js"></script></body></html>

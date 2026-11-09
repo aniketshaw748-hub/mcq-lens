@@ -8,16 +8,18 @@
   host.style.cssText = 'all:initial;position:fixed;inset:0;z-index:2147483647;pointer-events:none';
   const root = host.attachShadow({ mode: 'closed' });
   root.innerHTML = `<style>
-    :host{font:13px/1.5 'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif;color:#ecebe4}
-    .hud{position:fixed;right:18px;bottom:18px;width:min(360px,calc(100vw - 36px));box-sizing:border-box;background:rgba(14,16,15,.94);color:#ecebe4;border:1px solid rgba(236,235,228,.13);border-radius:18px;padding:14px 16px 16px;box-shadow:0 24px 60px -18px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.06);-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);pointer-events:auto;font:13px/1.5 'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif}
-    .top{display:flex;gap:12px;align-items:center;justify-content:space-between}.name{font-weight:650;font-size:14px;letter-spacing:-.01em;color:#c8f04a}.status{margin-top:8px;font-size:12.5px;color:#b8c0b9}
-    .reason{max-height:210px;overflow:auto;margin-top:10px;font-size:12.5px;color:#d9ddd7;scrollbar-width:thin;scrollbar-color:rgba(236,235,228,.25) transparent}.reason p{margin:0 0 8px;padding:10px 12px;border-radius:12px;background:rgba(236,235,228,.05);border:1px solid rgba(236,235,228,.08)}.reason strong{color:#fff;font-weight:650}
-    .buttons{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}button{font:550 12px/1 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;border:1px solid rgba(236,235,228,.2);background:transparent;border-radius:9px;padding:8px 10px;cursor:pointer;color:#ecebe4;transition:background .2s,color .2s,border-color .2s}button:hover{background:#c8f04a;border-color:#c8f04a;color:#0c0e0d}button:focus-visible{outline:2px solid #c8f04a;outline-offset:2px}.controls{display:flex;gap:6px}#off,#fold{padding:6px 10px}.hud.folded .reason,.hud.folded .buttons,.hud.folded .report{display:none}#send{background:#c8f04a;border-color:#c8f04a;color:#0c0e0d}
-    .report{margin-top:12px}.report textarea{box-sizing:border-box;width:100%;min-height:70px;font:12.5px/1.5 'Segoe UI',system-ui,sans-serif;color:#ecebe4;background:rgba(0,0,0,.35);border:1px solid rgba(236,235,228,.2);border-radius:10px;padding:8px 10px;resize:vertical}.report textarea::placeholder{color:#8a938b}.report textarea:focus{outline:none;border-color:#c8f04a}.report label{display:flex;gap:8px;align-items:center;font-size:12px;margin:8px 0;color:#b8c0b9}.report input{accent-color:#c8f04a}
-    .box{position:fixed;box-sizing:border-box;border:2px solid #0c0e0d;border-radius:10px;background:rgba(200,240,74,.16);box-shadow:0 0 0 3px #c8f04a,0 10px 30px -8px rgba(200,240,74,.6);pointer-events:none}.box.low{background:rgba(245,185,66,.14);box-shadow:0 0 0 3px #f5b942,0 10px 30px -8px rgba(245,185,66,.5)}
-    .box span{position:absolute;top:-30px;left:-3px;background:#c8f04a;color:#0c0e0d;border:1px solid #0c0e0d;padding:4px 9px;border-radius:7px;white-space:nowrap;font:650 11px/1.3 'Segoe UI',system-ui,sans-serif}.box.low span{background:#f5b942}
-    .region{position:fixed;box-sizing:border-box;border:1.5px dashed #c8f04a;border-radius:8px;pointer-events:none}.veil{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;background:rgba(12,14,13,.45);touch-action:none}.selection{position:fixed;border:2px solid #c8f04a;border-radius:8px;background:rgba(200,240,74,.14);pointer-events:none}.hint{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#0c0e0d;color:#ecebe4;border:1px solid rgba(236,235,228,.15);padding:12px 18px;border-radius:12px;font:14px 'Segoe UI',system-ui,sans-serif;pointer-events:none}
-  </style><div id="marks"></div><div class="hud"><div class="top"><span class="name">◎ MCQ Lens</span><span class="controls"><button id="fold" aria-expanded="true">Minimize</button><button id="off" aria-label="Turn off MCQ Lens">Turn off</button></span></div><div class="status" role="status"></div><div class="reason"></div><div class="buttons"><button id="rescan">Scan now</button><button id="area">Choose area</button><button id="reset">Full screen</button><button id="report">Report a problem</button></div><form class="report" hidden><textarea id="note" maxlength="2000" placeholder="What went wrong? (no personal details)"></textarea><label><input id="shot" type="checkbox"> Include a screenshot of the question area</label><div class="buttons"><button id="send" type="submit">Send report</button><button id="cancel" type="button">Cancel</button></div></form></div>`;
+    :host{--bg:#fff;--text:#111;--muted:#5f5f5c;--line:#e8e8e6;--mark:#1f9d55;--warn:#b7791f;font:13px/1.5 'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif;color:var(--text)}
+    @media (prefers-color-scheme:dark){:host{--bg:#161616;--text:#ededed;--muted:#a0a0a0;--line:#2a2a2a;--mark:#3ecf7a;--warn:#e0a84a}}
+    .hud{position:fixed;right:16px;bottom:16px;width:min(320px,calc(100vw - 32px));box-sizing:border-box;background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 8px 24px rgba(0,0,0,.12);pointer-events:auto;font:13px/1.5 'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,sans-serif}
+    .top{display:flex;align-items:center;justify-content:space-between}.name{font-weight:600}.status{margin-top:2px;font-size:12px;color:var(--muted)}
+    .reason{max-height:150px;overflow:auto;font-size:12.5px;scrollbar-width:thin}.reason:not(:empty){margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.reason p{margin:0 0 8px;color:var(--muted)}.reason p:last-child{margin:0}.reason strong{color:var(--text);font-weight:600}
+    button{font:500 12px/1 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;border:1px solid var(--line);background:transparent;border-radius:6px;padding:7px 10px;cursor:pointer;color:var(--text)}button:hover{border-color:var(--muted)}button:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+    #off{border:0;padding:2px 6px;font-size:18px;line-height:1;color:var(--muted)}#off:hover{color:var(--text)}
+    .report{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.report textarea{box-sizing:border-box;width:100%;min-height:64px;font:12.5px/1.5 'Segoe UI',system-ui,sans-serif;color:var(--text);background:transparent;border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}.report textarea:focus{outline:none;border-color:var(--muted)}.report label{display:flex;gap:8px;align-items:center;font-size:12px;margin:8px 0;color:var(--muted)}.report .buttons{display:flex;gap:6px}#send{background:var(--text);border-color:var(--text);color:var(--bg)}
+    .box{position:fixed;box-sizing:border-box;border:2px solid var(--mark);border-radius:8px;background:color-mix(in srgb,var(--mark) 8%,transparent);pointer-events:none}.box.low{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,transparent)}
+    .box span{position:absolute;top:-22px;left:-2px;background:var(--mark);color:#fff;padding:2px 7px;border-radius:5px;white-space:nowrap;font:600 11px/1.4 'Segoe UI',system-ui,sans-serif}.box.low span{background:var(--warn)}
+    .region{position:fixed;box-sizing:border-box;border:1.5px dashed var(--mark);border-radius:8px;pointer-events:none}.veil{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;background:rgba(0,0,0,.3);touch-action:none}.selection{position:fixed;border:2px solid #fff;border-radius:6px;background:rgba(255,255,255,.1);pointer-events:none}.hint{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--bg);color:var(--text);border:1px solid var(--line);padding:10px 16px;border-radius:10px;font:13px 'Segoe UI',system-ui,sans-serif;pointer-events:none}
+  </style><div id="marks"></div><div class="hud"><div class="top"><span class="name">MCQ Lens</span><button id="off" aria-label="Turn off MCQ Lens" title="Turn off">×</button></div><div class="status" role="status"></div><div class="reason"></div><form class="report" hidden><textarea id="note" maxlength="2000" placeholder="What went wrong? (no personal details)"></textarea><label><input id="shot" type="checkbox"> Include a screenshot of the question area</label><div class="buttons"><button id="send" type="submit">Send report</button><button id="cancel" type="button">Cancel</button></div></form></div>`;
   const marks = root.querySelector('#marks'), hud = root.querySelector('.hud'), reasons = root.querySelector('.reason');
   const setStatus = text => { status = text; root.querySelector('.status').textContent = text; };
   // A short log of what the extension did, sent with bug reports. Steps only: never question text or page content.
@@ -238,14 +240,8 @@
     };
   }
   root.querySelector('#off').onclick = stop;
-  // Minimize keeps the status line and leaves the page's own controls uncovered.
-  root.querySelector('#fold').onclick = event => {
-    const folded = hud.classList.toggle('folded');
-    event.currentTarget.textContent = folded ? 'Expand' : 'Minimize';
-    event.currentTarget.setAttribute('aria-expanded', String(!folded));
-  };
   const form = root.querySelector('.report');
-  root.querySelector('#report').onclick = () => { form.hidden = !form.hidden; if (!form.hidden) root.querySelector('#note').focus(); };
+  const openReport = () => { form.hidden = false; root.querySelector('#note').focus(); };
   root.querySelector('#cancel').onclick = () => { form.hidden = true; };
   form.onsubmit = async event => {
     event.preventDefault();
@@ -262,9 +258,6 @@
     } catch (error) { setStatus(`Report not sent: ${error.message}`); }
     finally { root.querySelector('#send').disabled = false; }
   };
-  root.querySelector('#rescan').onclick = () => { invalidate(); retryAt = 0; setStatus('Scanning…'); schedule(100); };
-  root.querySelector('#area').onclick = chooseArea;
-  root.querySelector('#reset').onclick = () => { crop = null; invalidate(); setStatus('Watching the full visible screen.'); schedule(200); };
   // Scrolling moves the highlights with the page; only a changed question triggers a new read.
   window.addEventListener('scroll', () => { if (enabled) requestAnimationFrame(reposition); }, { capture: true, passive: true });
   window.addEventListener('resize', () => { if (enabled) { crop = null; reposition(); schedule(800); } });
@@ -276,7 +269,7 @@
     if (location.href !== answered.url || docText() !== answered.text) schedule(250);
   }, 500);
   chrome.runtime.onMessage.addListener((message, sender, reply) => {
-    if (message.type === 'STATE') reply({ enabled, status });
+    if (message.type === 'STATE') reply({ enabled, status, cropped: Boolean(crop) });
     if (message.type === 'TOGGLE') {
       if (message.enabled) {
         enabled = true; interval = Math.min(60, Math.max(6, Number(message.interval) || 10)) * 1000;
@@ -286,6 +279,8 @@
       reply({ enabled, status });
     }
     if (message.type === 'AREA') { chooseArea(); reply({ ok: true }); }
+    if (message.type === 'FULL') { crop = null; invalidate(); setStatus('Watching the full visible screen.'); schedule(200); reply({ ok: true }); }
+    if (message.type === 'REPORT_FORM') { if (enabled) openReport(); reply({ ok: enabled }); }
     if (message.type === 'SCAN') { invalidate(); retryAt = 0; schedule(100); reply({ ok: true }); }
   });
 })();
