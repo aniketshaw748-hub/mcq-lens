@@ -28,6 +28,20 @@ async function fileReport(report) {
 // Crashes in the background worker itself.
 self.addEventListener('unhandledrejection', event => { fileReport({ kind: 'auto', stage: 'background', reason: 'exception', message: String(event.reason?.message || event.reason).slice(0, 300), events: [] }).catch(() => {}); });
 
+// No window on the page: the toolbar badge shows each tab's state instead.
+const BADGES = { reading: ['…', '#6f6f6b'], done: ['✓', '#1f9d55'], error: ['!', '#c2410c'], off: ['', '#6f6f6b'] };
+function badge(tabId, state) {
+  const [text, color] = BADGES[state];
+  chrome.action.setBadgeText({ tabId, text }).catch(() => {});
+  chrome.action.setBadgeBackgroundColor({ tabId, color }).catch(() => {});
+}
+// Keyboard shortcut (Alt+Shift+Y by default) shows or hides the reasoning on the current tab.
+chrome.commands.onCommand.addListener(async (command, tab) => {
+  if (command !== 'toggle-reasoning') return;
+  const id = tab?.id ?? (await chrome.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+  if (id) chrome.tabs.sendMessage(id, { type: 'PANEL' }).catch(() => {});
+});
+
 async function active(tabId, windowId) {
   const [tab] = await chrome.tabs.query({ active: true, windowId });
   const window = await chrome.windows.get(windowId);
@@ -39,7 +53,7 @@ async function handle(message, sender) {
   if (!tab || sender.frameId !== 0) throw new Error('This request must come from the enabled tab.');
   if (message.type === 'REPORT') return fileReport(message.report || {});
   if (message.type === 'CANCEL') {
-    jobs.get(tab.id)?.abort(); jobs.delete(tab.id); return { ok: true };
+    jobs.get(tab.id)?.abort(); jobs.delete(tab.id); badge(tab.id, 'off'); return { ok: true };
   }
   if (!['CAPTURE', 'SOLVE'].includes(message.type)) return;
   if (!await active(tab.id, tab.windowId)) return { paused: true };
@@ -57,11 +71,16 @@ async function handle(message, sender) {
   jobs.set(tab.id, controller);
   lastRequest.set(tab.id, Date.now() + 6000);
   const timeout = setTimeout(() => controller.abort(), 40000);
+  badge(tab.id, 'reading');
   try {
-    return { questions: await solve(settings, message.image, controller.signal, message.extractedQuestions) };
+    const questions = await solve(settings, message.image, controller.signal, message.extractedQuestions);
+    badge(tab.id, questions.some(q => q.answers?.length) ? 'done' : 'off');
+    return { questions };
   } catch (error) {
     const retryMs = error.retryMs || (error.status === 429 ? 60000 : 10000);
     if (error.status === 429) lastRequest.set(tab.id, Date.now() + retryMs);
+    // A scan replaced by a newer one is not a problem worth flagging.
+    if (!(error.name === 'AbortError' && jobs.get(tab.id) !== controller)) badge(tab.id, 'error');
     if (error.name === 'AbortError') return { error: 'Scan stopped or timed out.', retryMs, reason: controller.signal.aborted && jobs.get(tab.id) !== controller ? 'cancelled' : 'timeout' };
     return { error: error.message, retryMs, reason: error.reason || (error.status ? `http_${error.status}` : 'network'), stage: error.stage, status: error.status };
   } finally {

@@ -8,6 +8,8 @@ test('background restricts capture to the active focused tab, needs no setup, an
   globalThis.chrome = {
     storage: { local: { setAccessLevel: () => {}, get: async () => ({ ...stored }), set: async values => { Object.assign(stored, values); } } },
     tabs: { query: async () => [{ id: currentTab }], captureVisibleTab: async () => { captures++; return 'data:image/png;base64,test'; }, onRemoved: { addListener: () => {} } },
+    action: { setBadgeText: async () => {}, setBadgeBackgroundColor: async () => {} },
+    commands: { onCommand: { addListener: () => {} } },
     windows: { get: async () => ({ focused }) },
     runtime: { onMessage: { addListener: fn => { listener = fn; } } }
   };
@@ -41,6 +43,8 @@ test('bug reports: automatic ones respect the switch and are not repeated; user 
   globalThis.chrome = {
     storage: { local: { setAccessLevel: () => {}, get: async () => ({ ...stored }), set: async values => { Object.assign(stored, values); } } },
     tabs: { query: async () => [{ id: 1 }], onRemoved: { addListener: () => {} } },
+    action: { setBadgeText: async () => {}, setBadgeBackgroundColor: async () => {} },
+    commands: { onCommand: { addListener: () => {} } },
     windows: { get: async () => ({ focused: true }) },
     runtime: { getManifest: () => ({ version: '9.9.9' }), onMessage: { addListener: fn => { listener = fn; } } }
   };
@@ -57,5 +61,34 @@ test('bug reports: automatic ones respect the switch and are not repeated; user 
     assert.deepEqual(await send({ type: 'REPORT', report: { ...auto, stage: 'solving' } }), { skipped: true });
     assert.equal((await send({ type: 'REPORT', report: { kind: 'user', note: 'Wrong option highlighted', events: [] } })).id, 2);
     assert.equal(sent.length, 2);
+  } finally { globalThis.fetch = originalFetch; delete globalThis.chrome; delete globalThis.self; }
+});
+
+test('toolbar badge shows reading, answered, error and off for the tab, and the shortcut asks the tab to toggle its reasoning', async () => {
+  let listener, command, reply = { ok: true, status: 200, body: { questions: [{ answers: [{ text: 'B' }] }] } };
+  const badges = [], tabMessages = [], originalFetch = globalThis.fetch;
+  globalThis.self = { addEventListener: () => {} };
+  globalThis.chrome = {
+    storage: { local: { setAccessLevel: () => {}, get: async () => ({ clientId: 'install-badge' }), set: async () => {} } },
+    tabs: { query: async () => [{ id: 5 }], sendMessage: async (id, message) => { tabMessages.push([id, message.type]); }, onRemoved: { addListener: () => {} } },
+    action: { setBadgeText: async ({ tabId, text }) => { badges.push([tabId, text]); }, setBadgeBackgroundColor: async () => {} },
+    commands: { onCommand: { addListener: fn => { command = fn; } } },
+    windows: { get: async () => ({ focused: true }) },
+    runtime: { getManifest: () => ({ version: '9.9.9' }), onMessage: { addListener: fn => { listener = fn; } } }
+  };
+  globalThis.fetch = async () => ({ ok: reply.ok, status: reply.status, json: async () => reply.body });
+  try {
+    await import('../background.js?badge');
+    const send = message => new Promise(resolve => listener(message, { tab: { id: 5, windowId: 1 }, frameId: 0 }, resolve));
+    await send({ type: 'SOLVE', image: 'abc' });
+    assert.deepEqual(badges.slice(-2), [[5, '…'], [5, '✓']]);
+    await new Promise(resolve => setTimeout(resolve, 6100)); // the per-tab throttle
+    reply = { ok: false, status: 429, body: { error: 'Daily limit reached.', reason: 'daily', retryMs: 60000 } };
+    await send({ type: 'SOLVE', image: 'abc' });
+    assert.deepEqual(badges.at(-1), [5, '!']);
+    await send({ type: 'CANCEL' });
+    assert.deepEqual(badges.at(-1), [5, '']);
+    await command('toggle-reasoning', { id: 5 });
+    assert.deepEqual(tabMessages, [[5, 'PANEL']]);
   } finally { globalThis.fetch = originalFetch; delete globalThis.chrome; delete globalThis.self; }
 });

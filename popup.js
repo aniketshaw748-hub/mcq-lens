@@ -33,4 +33,11 @@ $('toggle').onclick = async () => {
 // Selecting an area and reporting happen on the page itself, so the popup closes.
 $('area').onclick = async () => { await send(cropped ? 'FULL' : 'AREA'); window.close(); };
 $('report').onclick = async () => { await send('REPORT_FORM'); window.close(); };
+// The page shows only the highlight; the reasoning opens with this shortcut, which people can change.
+chrome.commands.getAll().then(commands => {
+  const key = commands.find(command => command.name === 'toggle-reasoning')?.shortcut;
+  if (!key) { $('hint').textContent = 'Set a shortcut in your browser’s extension shortcuts to see why.'; return; }
+  const kbd = document.createElement('kbd'); kbd.textContent = key;
+  $('hint').replaceChildren('Press ', kbd, ' on the page to see why.');
+});
 chrome.tabs.query({ active: true, currentWindow: true }).then(tabs => { tab = tabs[0]; refresh(); });

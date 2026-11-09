@@ -40,8 +40,6 @@
 #review-list .yours{margin:0}
 #review-list pre{margin:8px 0 10px;font-size:13px}
 @media (prefers-color-scheme:dark){#review-list li.wrong .meta,#review-list .yours{color:#fb923c}}
-/* Leave the bottom-right corner free for the MCQ Lens panel on wide screens. */
-@media (min-width:1180px){.quiz-wrap{margin-left:max(var(--gutter),calc((100vw - 760px)/2 - 180px))}}
 @media (max-width:600px){
   #options label{padding:12px 14px}
   .quiz-wrap nav button{padding:0 14px}

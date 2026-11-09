@@ -69,9 +69,16 @@ try {
   await page.waitForFunction(() => window.testRoots[0].querySelector('.reason').textContent.includes('Paris'));
   assert.equal(await boxCount(), 1);
   console.log('PASS question changes trigger automatic fresh answers');
-  // The panel has no action buttons: just the answer, the reasoning and a close control.
-  assert.deepEqual(await page.evaluate(() => [...window.testRoots[0].querySelectorAll('.hud > .top button, .hud > button, .hud .buttons:not(.report .buttons) button')].map(b => b.id)), ['off']);
-  console.log('PASS panel shows only the answer, reasoning and a close button');
+  // The page shows only the highlight; the reasoning panel opens with the shortcut and hides with ×.
+  const panel = () => page.evaluate(() => { const r = window.testRoots[0], hud = r.querySelector('.hud'); return { open: !hud.hidden && getComputedStyle(hud).display !== 'none', boxes: r.querySelectorAll('.box').length, buttons: [...hud.querySelectorAll('button')].filter(b => !b.closest('.report')).map(b => b.id), reason: r.querySelector('.reason').textContent }; });
+  let view = await panel();
+  assert.equal(view.open, false); assert.ok(view.boxes > 0); assert.match(view.reason, /Paris/);
+  assert.deepEqual(await page.evaluate(() => window.dispatchExtension({ type: 'PANEL' })), { open: true });
+  view = await panel(); assert.equal(view.open, true); assert.deepEqual(view.buttons, ['hide']);
+  await page.evaluate(() => window.testRoots[0].querySelector('#hide').click());
+  assert.equal((await panel()).open, false);
+  assert.equal((await state()).enabled, true, 'hiding the panel does not turn MCQ Lens off');
+  console.log('PASS no window by default: highlight only; the shortcut shows the reasoning and × hides it');
 
   await mkdir(new URL('../test-results/', import.meta.url), { recursive: true });
   await page.screenshot({ path: new URL('../test-results/highlight.png', import.meta.url).pathname.replace(/^\/(\w:)/, '$1') });

@@ -14,12 +14,12 @@
     .top{display:flex;align-items:center;justify-content:space-between}.name{font-weight:600}.status{margin-top:2px;font-size:12px;color:var(--muted)}
     .reason{max-height:150px;overflow:auto;font-size:12.5px;scrollbar-width:thin}.reason:not(:empty){margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.reason p{margin:0 0 8px;color:var(--muted)}.reason p:last-child{margin:0}.reason strong{color:var(--text);font-weight:600}
     button{font:500 12px/1 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;border:1px solid var(--line);background:transparent;border-radius:6px;padding:7px 10px;cursor:pointer;color:var(--text)}button:hover{border-color:var(--muted)}button:focus-visible{outline:2px solid var(--text);outline-offset:2px}
-    #off{border:0;padding:2px 6px;font-size:18px;line-height:1;color:var(--muted)}#off:hover{color:var(--text)}
+    #hide{border:0;padding:2px 6px;font-size:18px;line-height:1;color:var(--muted)}#hide:hover{color:var(--text)}
     .report{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.report textarea{box-sizing:border-box;width:100%;min-height:64px;font:12.5px/1.5 'Segoe UI',system-ui,sans-serif;color:var(--text);background:transparent;border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}.report textarea:focus{outline:none;border-color:var(--muted)}.report label{display:flex;gap:8px;align-items:center;font-size:12px;margin:8px 0;color:var(--muted)}.report .buttons{display:flex;gap:6px}#send{background:var(--text);border-color:var(--text);color:var(--bg)}
     .box{position:fixed;box-sizing:border-box;border:2px solid var(--mark);border-radius:8px;background:color-mix(in srgb,var(--mark) 8%,transparent);pointer-events:none}.box.low{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,transparent)}
     .box span{position:absolute;top:-22px;left:-2px;background:var(--mark);color:#fff;padding:2px 7px;border-radius:5px;white-space:nowrap;font:600 11px/1.4 'Segoe UI',system-ui,sans-serif}.box.low span{background:var(--warn)}
     .region{position:fixed;box-sizing:border-box;border:1.5px dashed var(--mark);border-radius:8px;pointer-events:none}.veil{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;background:rgba(0,0,0,.3);touch-action:none}.selection{position:fixed;border:2px solid #fff;border-radius:6px;background:rgba(255,255,255,.1);pointer-events:none}.hint{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--bg);color:var(--text);border:1px solid var(--line);padding:10px 16px;border-radius:10px;font:13px 'Segoe UI',system-ui,sans-serif;pointer-events:none}
-  </style><div id="marks"></div><div class="hud"><div class="top"><span class="name">MCQ Lens</span><button id="off" aria-label="Turn off MCQ Lens" title="Turn off">×</button></div><div class="status" role="status"></div><div class="reason"></div><form class="report" hidden><textarea id="note" maxlength="2000" placeholder="What went wrong? (no personal details)"></textarea><label><input id="shot" type="checkbox"> Include a screenshot of the question area</label><div class="buttons"><button id="send" type="submit">Send report</button><button id="cancel" type="button">Cancel</button></div></form></div>`;
+  </style><div id="marks"></div><div class="hud" hidden><div class="top"><span class="name">MCQ Lens</span><button id="hide" aria-label="Hide the reasoning" title="Hide (Alt+Shift+Y)">×</button></div><div class="status" role="status"></div><div class="reason"></div><form class="report" hidden><textarea id="note" maxlength="2000" placeholder="What went wrong? (no personal details)"></textarea><label><input id="shot" type="checkbox"> Include a screenshot of the question area</label><div class="buttons"><button id="send" type="submit">Send report</button><button id="cancel" type="button">Cancel</button></div></form></div>`;
   const marks = root.querySelector('#marks'), hud = root.querySelector('.hud'), reasons = root.querySelector('.reason');
   const setStatus = text => { status = text; root.querySelector('.status').textContent = text; };
   // A short log of what the extension did, sent with bug reports. Steps only: never question text or page content.
@@ -239,9 +239,11 @@
       cleanup();
     };
   }
-  root.querySelector('#off').onclick = stop;
+  // The page shows only the highlight. The reasoning panel opens with the shortcut (or for a report).
   const form = root.querySelector('.report');
-  const openReport = () => { form.hidden = false; root.querySelector('#note').focus(); };
+  const hidePanel = () => { hud.hidden = true; form.hidden = true; };
+  root.querySelector('#hide').onclick = () => hidePanel();
+  const openReport = () => { hud.hidden = false; form.hidden = false; root.querySelector('#note').focus(); };
   root.querySelector('#cancel').onclick = () => { form.hidden = true; };
   form.onsubmit = async event => {
     event.preventDefault();
@@ -273,7 +275,7 @@
     if (message.type === 'TOGGLE') {
       if (message.enabled) {
         enabled = true; interval = Math.min(60, Math.max(6, Number(message.interval) || 10)) * 1000;
-        invalidate(); retryAt = 0; document.documentElement.append(host); hud.hidden = false; setStatus('Watching this tab. Scanning…'); schedule(300);
+        invalidate(); retryAt = 0; document.documentElement.append(host); hud.hidden = true; setStatus('Watching this tab. Scanning…'); schedule(300);
         log('enabled', `check every ${interval / 1000}s`);
       } else stop();
       reply({ enabled, status });
@@ -281,6 +283,7 @@
     if (message.type === 'AREA') { chooseArea(); reply({ ok: true }); }
     if (message.type === 'FULL') { crop = null; invalidate(); setStatus('Watching the full visible screen.'); schedule(200); reply({ ok: true }); }
     if (message.type === 'REPORT_FORM') { if (enabled) openReport(); reply({ ok: enabled }); }
+    if (message.type === 'PANEL') { if (enabled) { if (hud.hidden) hud.hidden = false; else hidePanel(); } reply({ open: enabled && !hud.hidden }); }
     if (message.type === 'SCAN') { invalidate(); retryAt = 0; schedule(100); reply({ ok: true }); }
   });
 })();

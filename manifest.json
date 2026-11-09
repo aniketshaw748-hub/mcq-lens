@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MCQ Lens",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Watch a question on your current tab and highlight AI-suggested answers as it changes.",
   "minimum_chrome_version": "116",
   "icons": {
@@ -29,6 +29,14 @@
       "16": "icons/icon16.png",
       "32": "icons/icon32.png",
       "48": "icons/icon48.png"
+    }
+  },
+  "commands": {
+    "toggle-reasoning": {
+      "suggested_key": {
+        "default": "Alt+Shift+Y"
+      },
+      "description": "Show or hide why MCQ Lens suggested the answer"
     }
   },
   "options_page": "options.html"

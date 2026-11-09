@@ -26,7 +26,7 @@ try {
   await page.locator('#groq').fill('gsk_test-key-not-real');
   await page.locator('#interval').fill('8');
   await page.getByRole('button', { name: 'Save keys' }).click();
-  await page.getByRole('status').filter({ hasText: 'Saved.' }).waitFor();
+  await page.locator('#status').filter({ hasText: 'Saved.' }).waitFor();
   await page.locator('#interval').dispatchEvent('change');
   await page.locator('#interval-status').filter({ hasText: 'Saved.' }).waitFor();
   const settings = await page.evaluate(() => chrome.storage.local.get(['groqKey', 'geminiKey', 'interval']));
@@ -46,5 +46,8 @@ try {
   assert.equal(workerResult, 'https://mcq-lens.pages.dev');
   assert.equal(await worker.evaluate(() => chrome.runtime.getManifest().manifest_version), 3);
   assert.deepEqual(errors, []);
+  const shortcut = await page.evaluate(async () => (await chrome.commands.getAll()).find(c => c.name === 'toggle-reasoning')?.shortcut);
+  assert.equal(shortcut, 'Alt+Shift+Y');
   console.log('PASS Manifest V3 worker and solver load without browser errors');
+  console.log(`PASS reasoning shortcut registered as ${shortcut}`);
 } finally { await context.close(); }
