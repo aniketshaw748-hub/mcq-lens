@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /study
+
+Sitemap: https://mcq-lens.pages.dev/sitemap.xml

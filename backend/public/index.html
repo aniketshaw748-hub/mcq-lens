@@ -1,38 +1,71 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MCQ Lens · Answers, highlighted on the page</title>
-<meta name="description" content="A free browser extension that reads the multiple-choice question on your screen and highlights the suggested answer, with its reasoning. No account or API key.">
+<title>MCQ Lens: free AI answer helper for multiple-choice questions (Chrome, Edge, Firefox)</title>
+<meta name="description" content="MCQ Lens is a free browser extension for Chrome, Edge and Firefox. It reads the multiple-choice question on your screen and rings the suggested answer. Press Alt+Shift+Y to see why. No account or API key.">
+<link rel="canonical" href="https://mcq-lens.pages.dev/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="MCQ Lens">
+<meta property="og:title" content="MCQ Lens: answers, highlighted on the page">
+<meta property="og:description" content="A free browser extension that reads the multiple-choice question on your screen and rings the suggested answer. Chrome, Edge and Firefox.">
+<meta property="og:url" content="https://mcq-lens.pages.dev/"><meta property="og:image" content="https://mcq-lens.pages.dev/img/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="https://mcq-lens.pages.dev/img/og.png">
 <link rel="icon" href="img/icon.png"><link rel="preload" href="fonts/geist.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="site.css"><script type="module" src="site.js"></script></head>
+<link rel="stylesheet" href="site.css"><script type="module" src="site.js"></script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"MCQ Lens","alternateName":"MCQ Lens browser extension","applicationCategory":"BrowserApplication","applicationSubCategory":"Education","operatingSystem":"Chrome, Microsoft Edge, Firefox","description":"A free browser extension that reads the multiple-choice question on your screen and rings the AI-suggested answer, with the reasoning on Alt+Shift+Y.","url":"https://mcq-lens.pages.dev/","image":"https://mcq-lens.pages.dev/img/og.png","downloadUrl":"https://github.com/aniketshaw748-hub/mcq-lens/releases/latest","installUrl":"https://microsoftedge.microsoft.com/addons/detail/ihjfepjjhndaabbnamhmdncjajnngpdf","sameAs":["https://microsoftedge.microsoft.com/addons/detail/ihjfepjjhndaabbnamhmdncjajnngpdf","https://github.com/aniketshaw748-hub/mcq-lens"],"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Is MCQ Lens free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Each install gets 50 free questions a day with no account or API key. For more, add your own free Groq, Gemini or Z.ai key in Settings."}},
+{"@type":"Question","name":"Which browsers does MCQ Lens work in?","acceptedAnswer":{"@type":"Answer","text":"Chrome, Microsoft Edge, Brave and Opera, and Firefox 128 or newer. On Edge you can install it from the Edge Add-ons store."}},
+{"@type":"Question","name":"Does MCQ Lens click or submit answers?","acceptedAnswer":{"@type":"Answer","text":"No. It only draws a ring around the suggested option. You choose and submit your own answer."}},
+{"@type":"Question","name":"Does it work when the options are images or equations?","acceptedAnswer":{"@type":"Answer","text":"Yes. When the options are pictures, such as equations, MCQ Lens reads a screenshot of the question and rings the radio button of the option it picked."}},
+{"@type":"Question","name":"What does MCQ Lens send, and where?","acceptedAnswer":{"@type":"Answer","text":"Only on tabs where you turn it on, the question goes to the MCQ Lens service and its AI providers. It stops when you reload or leave the page."}},
+{"@type":"Question","name":"Can MCQ Lens be wrong?","acceptedAnswer":{"@type":"Answer","text":"Yes. Answers come from AI. Check them, and follow your school's or test platform's rules."}}]}</script>
+</head>
 <body>
 <header class="nav"><div class="wrap nav-inner"><a class="brand" href="/"><img src="img/icon.png" alt="" width="22" height="22">MCQ Lens</a><nav class="nav-links" aria-label="Main"><a href="/test">Practice test</a><a href="/install">Install guide</a><a href="https://github.com/aniketshaw748-hub/mcq-lens" rel="noreferrer">GitHub</a></nav></div></header>
 
 <main class="wrap">
 <section class="hero">
   <h1>Answers, highlighted on the page.</h1>
-  <p class="lead">MCQ Lens reads the multiple-choice question on your screen and marks the suggested option. Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> to see why. Free, no account.</p>
+  <p class="lead">MCQ Lens is a free browser extension. It reads the multiple-choice question on your screen and rings the suggested option. Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> to see why. No account needed.</p>
   <div class="cta"><a id="download" class="btn btn-solid" href="/install?browser=chrome&amp;download=1" data-download>Download for Chrome</a><a class="text-link" href="/test">Try the practice test →</a></div>
-  <p class="also">Also for <a href="/install?browser=edge&amp;download=1">Edge</a>, <a href="/install?browser=brave&amp;download=1">Brave</a>, <a href="/install?browser=opera&amp;download=1">Opera</a> and <a href="/install?browser=firefox&amp;download=1">Firefox</a>.</p>
+  <p class="also">Edge: <a href="https://microsoftedge.microsoft.com/addons/detail/ihjfepjjhndaabbnamhmdncjajnngpdf" rel="noreferrer">get it from Edge Add-ons</a>. Also for <a href="/install?browser=brave&amp;download=1">Brave</a>, <a href="/install?browser=opera&amp;download=1">Opera</a> and <a href="/install?browser=firefox&amp;download=1">Firefox</a>.</p>
 </section>
 
-<figure class="shot"><img src="img/screenshot.webp" width="1280" height="760" alt="MCQ Lens on a practice question: a small green ring circles option B's radio button as the suggested answer. Nothing else is added to the page."></figure>
+<figure class="shot"><img src="img/screenshot.webp" width="1280" height="760" alt="MCQ Lens on a practice question: a thin green ring circles option B's radio button, which the student has also selected. Nothing else is added to the page."></figure>
 
 <section class="block" aria-labelledby="how">
-  <h2 id="how">How it works</h2>
+  <h2 id="how">After you install</h2>
   <ol class="steps-row">
-    <li><span class="n">1</span><h3>Install</h3><p>Download the zip and load it in your browser. The <a href="/install">install guide</a> takes about a minute.</p></li>
-    <li><span class="n">2</span><h3>Turn it on</h3><p>Open a page with a question, click the MCQ Lens icon and choose Enable on this tab.</p></li>
-    <li><span class="n">3</span><h3>Check the suggestion</h3><p>A small ring circles the suggested option. Press Alt+Shift+Y to see the reasoning. Next question? It answers again.</p></li>
+    <li><span class="n">1</span><h3>Turn it on</h3><p>Open a page with a question, click the MCQ Lens icon and choose Enable on this tab.</p></li>
+    <li><span class="n">2</span><h3>Look for the ring</h3><p>A thin ring circles the suggested option. Next question? It answers again on its own.</p></li>
+    <li><span class="n">3</span><h3>Ask why</h3><p>Press Alt+Shift+Y for the reasoning. Press it again to hide it.</p></li>
   </ol>
 </section>
 
-<section class="block" aria-labelledby="facts">
-  <h2 id="facts">What to know</h2>
-  <div class="facts">
-    <div><h3>It never clicks for you</h3><p>MCQ Lens only highlights. It doesn’t select or submit anything.</p></div>
-    <div><h3>Only the tab you choose</h3><p>It reads a page only after you turn it on there, and stops when you reload or leave.</p></div>
-    <div><h3>50 free questions a day</h3><p>Need more? Add your own free Groq, Gemini or Z.ai key in Settings.</p></div>
-    <div><h3>No sign-up</h3><p>A question goes only to the MCQ Lens service and its AI providers. Read the <a href="/privacy">privacy policy</a>.</p></div>
+<section class="block" aria-labelledby="features">
+  <h2 id="features">What it does</h2>
+  <div class="feature">
+    <div class="feature-text"><h3>Just a ring</h3><p>No boxes or labels on the page. A thin ring circles the suggested option’s radio button, so the answer you picked stays visible inside it. A dashed ring means the AI is less sure.</p></div>
+    <img src="img/ring.webp" width="1000" height="640" loading="lazy" alt="A thin green ring around option B's radio button on a practice question.">
+  </div>
+  <div class="feature">
+    <div class="feature-text"><h3>The reasoning, on a shortcut</h3><p>Press <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>Y</kbd> on the page to see why it picked that option. Press it again, or the hide icon, to put it away.</p></div>
+    <img src="img/reasoning.webp" width="1000" height="640" loading="lazy" alt="The MCQ Lens reasoning panel in the corner of the page, explaining the answer to a scheduling question.">
+  </div>
+  <div class="feature">
+    <div class="feature-text"><h3>Your colour, your keys</h3><p>Pick any ring colour in Settings. Used today’s 50 free questions? Add your own free Groq, Gemini or Z.ai key and keep going with no daily cap.</p></div>
+    <img src="img/settings.webp" width="1000" height="800" loading="lazy" alt="MCQ Lens Settings with fields for your own Groq, Gemini and Z.ai keys and the ring colour choices.">
+  </div>
+</section>
+
+<section class="block" aria-labelledby="faq">
+  <h2 id="faq">Questions</h2>
+  <div class="faq">
+    <details><summary>Is MCQ Lens free?</summary><p>Yes. Each install gets 50 free questions a day, with no account or API key. For more, add your own free Groq, Gemini or Z.ai key in Settings.</p></details>
+    <details><summary>Which browsers does it work in?</summary><p>Chrome, Edge, Brave, Opera and Firefox 128 or newer. On Edge you can <a href="https://microsoftedge.microsoft.com/addons/detail/ihjfepjjhndaabbnamhmdncjajnngpdf" rel="noreferrer">install it from Edge Add-ons</a>; the <a href="/install">install guide</a> covers the rest.</p></details>
+    <details><summary>Does it click or submit answers?</summary><p>No. It only draws the ring. You choose and submit your own answer.</p></details>
+    <details><summary>Does it work when the options are images or equations?</summary><p>Yes. When the options are pictures, MCQ Lens reads a screenshot of the question and rings the radio button of the option it picked.</p></details>
+    <details><summary>What does it send, and where?</summary><p>Only on tabs where you turn it on, the question goes to the MCQ Lens service and its AI providers. It stops when you reload or leave. Read the <a href="/privacy">privacy policy</a>.</p></details>
+    <details><summary>Can it be wrong?</summary><p>Yes. Answers come from AI. Check them, and follow your school’s or test platform’s rules.</p></details>
   </div>
 </section>
 

@@ -28,22 +28,26 @@ Visibility: Public. Markets: all.
 
 ## Store listing (English)
 **Description:**
-MCQ Lens reads the multiple-choice question on your current tab and highlights an AI-suggested answer, with a short worked explanation.
+MCQ Lens reads the multiple-choice question on your current tab and rings the AI-suggested answer. Press Alt+Shift+Y to see why.
 
-How it works:
-• Click the MCQ Lens toolbar button and choose "Enable on this tab". Only tabs you enable are read.
-• MCQ Lens reads the visible question and its options. For normal web pages it reads the text directly; for questions shown as images it reads a screenshot of the visible tab or an area you choose.
-• It highlights the suggested option on the page. Press Alt+Shift+Y to see the reasoning. It never clicks, selects or submits anything.
-• When the question changes (for example after "Next"), it reads the new question automatically. Scrolling or switching tabs does not trigger new reads.
-• "Select area" in the toolbar menu limits reading to the question, which also keeps unrelated information out.
+How to use it after installing:
+• Open a page with a question, click the MCQ Lens toolbar button and choose "Enable on this tab". Only tabs you enable are read.
+• A thin ring circles the suggested option's radio button. Your own choice stays visible inside it, and a dashed ring means the AI is less sure. Nothing else is added to the page.
+• Press Alt+Shift+Y on the page to see the reasoning. Press it again, or the hide icon, to put it away.
+• Click "Next" and it reads the new question on its own. Scrolling or switching tabs does not trigger new reads.
+• Works with text, code and picture options such as equations: for picture options it reads a screenshot and rings the option's radio button.
+• Pick any ring colour in Settings.
+• "Select area" in the toolbar menu limits reading to the question.
 
-No sign-up or setup: each browser gets 50 free questions a day from the MCQ Lens service. You can add your own free Groq, Google Gemini or Z.ai API key in Settings to use your own provider limits instead.
+Free, with no sign-up: each browser gets 50 free questions a day from the MCQ Lens service. Used them up? Add your own free Groq, Google Gemini or Z.ai API key in Settings and keep going with no daily cap.
 
-Important: answers come from AI models (Groq, Google Gemini or Z.ai through the MCQ Lens service) and can be wrong. Check them against your course material, and follow the rules of your school, course or test platform. Question text or screenshots are sent to the MCQ Lens service and these providers only while the extension is enabled; see the privacy policy for details. If something goes wrong, MCQ Lens sends a short error report (never question text or page content) so it can be fixed; you can switch this off in Settings or send your own report with "Report a problem".
+MCQ Lens never clicks, selects or submits anything. Answers come from AI models (Groq, Google Gemini or Z.ai through the MCQ Lens service) and can be wrong. Check them, and follow the rules of your school, course or test platform. Question text or screenshots are sent to the MCQ Lens service and these providers only while the extension is enabled; see the privacy policy. If something goes wrong, MCQ Lens sends a short error report (never question text or page content); you can switch this off in Settings or send your own with "Report a problem".
 
-**Search terms:** MCQ, multiple choice, quiz helper, study, answer highlight, practice questions, exam prep
+Website and practice test: https://mcq-lens.pages.dev
 
-**Assets:** logo `store/logo-300.png`; screenshots `store/store-screenshot-1-highlight.png`, `store/store-screenshot-2-settings.png` (1280x800).
+**Search terms (7 max):** MCQ, multiple choice questions, MCQ solver, quiz answers, AI answer helper, exam prep, study helper
+
+**Assets:** logo `store/logo-300.png`; screenshots in `store/screenshots/` (1280x800): `1-ring.png`, `2-reasoning.png`, `3-settings.png`, `4-colour.png`.
 
 ## Notes for certification
 No account or login is needed. Test page with practice questions: https://mcq-lens.pages.dev/test
