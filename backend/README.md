@@ -68,6 +68,7 @@ npm run deploy
 node scripts/upload-secrets.mjs
 node scripts/pages.mjs https://mcq-lens.aniketshaw748.workers.dev
 npx wrangler pages deploy .local/pages --project-name mcq-lens --branch main --commit-dirty=true
+node scripts/indexnow.mjs   # ask Bing and other IndexNow engines to recrawl the public pages
 npm run invites -- --count 100 --url https://mcq-lens.pages.dev
 ```
 
