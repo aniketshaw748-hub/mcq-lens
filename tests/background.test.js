@@ -6,7 +6,7 @@ test('background captures only the tab on screen (focus not needed), needs no se
   const originalFetch = globalThis.fetch;
   globalThis.self = { addEventListener: () => {} };
   globalThis.chrome = {
-    storage: { local: { setAccessLevel: () => {}, get: async () => ({ ...stored }), set: async values => { Object.assign(stored, values); } } },
+    storage: { onChanged: { addListener: () => {} }, local: { setAccessLevel: () => {}, get: async () => ({ ...stored }), set: async values => { Object.assign(stored, values); } } },
     tabs: { query: async () => [{ id: currentTab }], captureVisibleTab: async () => { captures++; return 'data:image/png;base64,test'; }, onRemoved: { addListener: () => {} } },
     action: { setBadgeText: async () => {}, setBadgeBackgroundColor: async () => {} },
     commands: { onCommand: { addListener: () => {} } },
@@ -42,7 +42,7 @@ test('bug reports: automatic ones respect the switch and are not repeated; user 
   const sent = [], originalFetch = globalThis.fetch;
   globalThis.self = { addEventListener: () => {} };
   globalThis.chrome = {
-    storage: { local: { setAccessLevel: () => {}, get: async () => ({ ...stored }), set: async values => { Object.assign(stored, values); } } },
+    storage: { onChanged: { addListener: () => {} }, local: { setAccessLevel: () => {}, get: async () => ({ ...stored }), set: async values => { Object.assign(stored, values); } } },
     tabs: { query: async () => [{ id: 1 }], onRemoved: { addListener: () => {} } },
     action: { setBadgeText: async () => {}, setBadgeBackgroundColor: async () => {} },
     commands: { onCommand: { addListener: () => {} } },
@@ -70,7 +70,7 @@ test('toolbar badge shows reading, answered, error and off for the tab, and the 
   const badges = [], tabMessages = [], originalFetch = globalThis.fetch;
   globalThis.self = { addEventListener: () => {} };
   globalThis.chrome = {
-    storage: { local: { setAccessLevel: () => {}, get: async () => ({ clientId: 'install-badge' }), set: async () => {} } },
+    storage: { onChanged: { addListener: () => {} }, local: { setAccessLevel: () => {}, get: async () => ({ clientId: 'install-badge' }), set: async () => {} } },
     tabs: { query: async () => [{ id: 5 }], sendMessage: async (id, message) => { tabMessages.push([id, message.type]); }, onRemoved: { addListener: () => {} } },
     action: { setBadgeText: async ({ tabId, text }) => { badges.push([tabId, text]); }, setBadgeBackgroundColor: async () => {} },
     commands: { onCommand: { addListener: fn => { command = fn; } } },

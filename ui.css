@@ -56,3 +56,11 @@ kbd{font:500 12px/1 'Geist Mono',monospace;padding:2px 5px;border:1px solid var(
 .settings label.check{justify-content:flex-start;align-items:center;gap:10px;margin-top:16px;font-weight:400}
 .settings label.check input{width:16px;height:16px;margin:0;accent-color:var(--solid)}
 .settings .fine{margin-top:40px}
+.swatches{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.settings .swatch{position:relative;width:28px;height:28px;margin:0;padding:0;border-radius:50%;border:2px solid var(--c);background:transparent;cursor:pointer}
+.settings .swatch[aria-pressed=true],.settings .swatch.custom.on{outline:2px solid var(--text);outline-offset:2px}
+.settings .swatch.custom{border:2px dashed var(--line-2);overflow:hidden}
+.settings .swatch.custom.on{border:2px solid var(--c)}
+.settings .swatch.custom input{position:absolute;inset:-6px;width:40px;height:40px;opacity:0;cursor:pointer;border:0;padding:0}
+.settings .swatch:focus-visible,.settings .swatch.custom:focus-within{outline:2px solid var(--text);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

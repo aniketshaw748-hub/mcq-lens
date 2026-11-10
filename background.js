@@ -95,6 +95,11 @@ chrome.runtime.onMessage.addListener((message, sender, reply) => {
   handle(message, sender).then(reply, error => reply({ error: error.message, retryMs: 10000 }));
   return true;
 });
+// A new ring colour from Settings applies at once on every tab where MCQ Lens is on (other tabs ignore it).
+chrome.storage.onChanged.addListener(async (changes, area) => {
+  if (area !== 'local' || !changes.ringColor) return;
+  for (const tab of await chrome.tabs.query({})) chrome.tabs.sendMessage(tab.id, { type: 'RING', color: changes.ringColor.newValue || '' }).catch(() => {});
+});
 chrome.tabs.onRemoved.addListener(id => {
   jobs.get(id)?.abort(); jobs.delete(id); lastRequest.delete(id);
 });

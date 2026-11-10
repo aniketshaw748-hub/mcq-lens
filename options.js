@@ -1,6 +1,17 @@
 const $ = id => document.getElementById(id);
+// Ring colour: a preset or any custom colour. Saved at once and applied to tabs where MCQ Lens is on.
+const showRing = color => {
+  let preset = false;
+  for (const swatch of document.querySelectorAll('.swatch[data-color]')) { const on = swatch.dataset.color === color; preset ||= on; swatch.setAttribute('aria-pressed', on); }
+  $('ring-custom').parentElement.classList.toggle('on', !preset);
+  if (!preset) { $('ring-custom').value = color; $('ring-custom').parentElement.style.setProperty('--c', color); }
+};
+const saveRing = async color => { await chrome.storage.local.set({ ringColor: color }); showRing(color); $('ring-status').textContent = 'Saved.'; };
+document.querySelectorAll('.swatch[data-color]').forEach(swatch => { swatch.onclick = () => saveRing(swatch.dataset.color); });
+$('ring-custom').onchange = () => saveRing($('ring-custom').value);
 const fields = { groq: 'groqKey', gemini: 'geminiKey', zai: 'zaiKey' };
-chrome.storage.local.get(['groqKey', 'geminiKey', 'zaiKey', 'apiKey', 'interval', 'autoReports']).then(s => {
+chrome.storage.local.get(['groqKey', 'geminiKey', 'zaiKey', 'apiKey', 'interval', 'autoReports', 'ringColor']).then(s => {
+  showRing(s.ringColor || '');
   $('auto-reports').checked = s.autoReports !== false;
   $('groq').value = s.groqKey || ''; $('gemini').value = s.geminiKey || s.apiKey || ''; $('zai').value = s.zaiKey || ''; $('interval').value = s.interval || 10;
 });

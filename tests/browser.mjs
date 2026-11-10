@@ -30,7 +30,7 @@ try {
           if (window.failure) return window.failure;
           const rect = document.querySelectorAll('label')[1].getBoundingClientRect();
           const box = [rect.top / 800 * 1000, rect.left / 1100 * 1000, rect.bottom / 800 * 1000, rect.right / 1100 * 1000];
-          return { questions: [{ question, confidence: 'high', explanation: question.includes('capital') ? 'Paris is the capital of France.' : 'Two plus two equals four.', answers: [{ text: question.includes('capital') ? 'Paris' : '4', box }] }] };
+          return { questions: [{ question, confidence: 'high', explanation: question.includes('capital') ? 'Paris is the capital of France.' : 'Two plus two equals four.', answers: [{ text: window.answerText || (question.includes('capital') ? 'Paris' : '4'), box }] }] };
         }
         return { ok: true };
       }
@@ -60,6 +60,14 @@ try {
   assert.equal(await page.evaluate(() => window.calls.filter(x => x === 'SOLVE').length), initialRequests);
   assert.equal(await boxCount(), 1); assert.ok(await dotOnRadio(), 'the dot stays on the option’s radio button');
   console.log('PASS scrolling moves the highlight with its option and does not re-read');
+  const ringStyle = () => page.evaluate(() => { const s = getComputedStyle(window.testRoots[0].querySelector('.box')); return { color: s.borderTopColor, width: s.borderTopWidth, shadow: s.boxShadow, fill: s.backgroundColor }; });
+  let ring = await ringStyle();
+  assert.deepEqual([ring.color, ring.width, ring.shadow, ring.fill], ['rgb(31, 157, 85)', '2px', 'none', 'rgba(0, 0, 0, 0)'], 'a plain ring: default green, no glow, clear centre');
+  await page.evaluate(() => window.dispatchExtension({ type: 'RING', color: '#2563eb' }));
+  assert.equal((await ringStyle()).color, 'rgb(37, 99, 235)');
+  await page.evaluate(() => window.dispatchExtension({ type: 'RING', color: 'red; background:red' }));
+  assert.equal((await ringStyle()).color, 'rgb(31, 157, 85)', 'invalid colours fall back to the default');
+  console.log('PASS the mark is a plain ring and its colour changes live from Settings');
   await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(500);
   await page.evaluate(() => { window.capturesBefore = window.calls.filter(x => x === 'CAPTURE').length; window.unfocused = true; });
   await page.waitForFunction(() => window.calls.filter(x => x === 'CAPTURE').length > window.capturesBefore + 1);
@@ -135,6 +143,12 @@ try {
   assert.equal(await page.evaluate(() => window.reports[2].screenshot), '');
   console.log('PASS Report a problem sends the note, and a screenshot only when ticked');
   await page.evaluate(() => window.dispatchExtension({ type: 'TOGGLE', enabled: false }));
+
+  // Options that are pictures (equations, diagrams) have no text to match: the ring snaps to the radio of the row the AI pointed at.
+  await page.evaluate(() => { window.failure = null; window.delay = 0; window.imageOverride = null; window.answerText = '$2x\sin x + x^2\cos x$'; window.dispatchExtension({ type: 'TOGGLE', enabled: true, interval: 6 }); });
+  await waitStatus('1 suggested'); assert.equal(await boxCount(), 1); assert.ok(await dotOnRadio(), 'the ring sits on the radio of the row the AI pointed at');
+  await page.evaluate(() => { window.answerText = ''; return window.dispatchExtension({ type: 'TOGGLE', enabled: false }); });
+  console.log('PASS image-only options: the ring snaps to the radio button of the estimated row');
 
   await page.evaluate(() => { window.delay = 0; window.failure = { error: 'API quota reached. Paused for 60 seconds', reason: 'daily', retryMs: 60000 }; window.dispatchExtension({ type: 'TOGGLE', enabled: true, interval: 6 }); });
   await waitStatus('quota reached');

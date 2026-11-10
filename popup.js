@@ -22,10 +22,10 @@ $('settings').onclick = () => chrome.runtime.openOptionsPage();
 $('toggle').onclick = async () => {
   $('toggle').disabled = true;
   try {
-    const settings = await chrome.storage.local.get(['interval']);
+    const settings = await chrome.storage.local.get(['interval', 'ringColor']);
     if (!/^https?:/.test(tab.url || '')) throw new Error('Open a regular website first. Browser system pages and PDFs are not supported.');
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
-    await send('TOGGLE', { enabled: !enabled, interval: settings.interval || 10 });
+    await send('TOGGLE', { enabled: !enabled, interval: settings.interval || 10, ringColor: settings.ringColor || '' });
     await refresh();
   } catch (error) { $('status').textContent = error.message; }
   finally { $('toggle').disabled = false; }

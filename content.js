@@ -17,7 +17,7 @@
     button{font:500 12px/1 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;border:1px solid var(--line);background:transparent;border-radius:6px;padding:7px 10px;cursor:pointer;color:var(--text)}button:hover{border-color:var(--muted)}button:focus-visible{outline:2px solid var(--text);outline-offset:2px}
     #hide{display:grid;place-items:center;border:0;padding:4px;border-radius:6px;color:var(--muted)}#hide:hover{color:var(--text);background:color-mix(in srgb,var(--text) 6%,transparent)}
     .report{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.report textarea{box-sizing:border-box;width:100%;min-height:64px;font:12.5px/1.5 'Segoe UI',system-ui,sans-serif;color:var(--text);background:transparent;border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}.report textarea:focus{outline:none;border-color:var(--muted)}.report label{display:flex;gap:8px;align-items:center;font-size:12px;margin:8px 0;color:var(--muted)}.report .buttons{display:flex;gap:6px}#send{background:var(--text);border-color:var(--text);color:var(--bg)}
-    .box{position:fixed;box-sizing:border-box;border-radius:50%;border:2.5px solid var(--mark);background:transparent;box-shadow:0 0 0 3px color-mix(in srgb,var(--mark) 20%,transparent);pointer-events:none}.box.low{border-color:var(--warn);box-shadow:0 0 0 3px color-mix(in srgb,var(--warn) 20%,transparent)}
+    .box{position:fixed;box-sizing:border-box;border-radius:50%;border:2px solid var(--ring,var(--mark));pointer-events:none}.box.low{border-style:dashed}
     .region{position:fixed;box-sizing:border-box;border:1.5px dashed var(--mark);border-radius:8px;pointer-events:none}.veil{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;background:rgba(0,0,0,.3);touch-action:none}.selection{position:fixed;border:2px solid #fff;border-radius:6px;background:rgba(255,255,255,.1);pointer-events:none}.hint{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--bg);color:var(--text);border:1px solid var(--line);padding:10px 16px;border-radius:10px;font:13px 'Segoe UI',system-ui,sans-serif;pointer-events:none}
   </style><div id="marks"></div><div class="hud" hidden><div class="top"><span class="name">MCQ Lens</span><button id="hide" aria-label="Hide the reasoning" title="Hide (Alt+Shift+Y)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg></button></div><div class="status" role="status"></div><div class="reason"></div><form class="report" hidden><textarea id="note" maxlength="2000" placeholder="What went wrong? (no personal details)"></textarea><label><input id="shot" type="checkbox"> Include a screenshot of the question area</label><div class="buttons"><button id="send" type="submit">Send report</button><button id="cancel" type="button">Cancel</button></div></form></div>`;
   const marks = root.querySelector('#marks'), hud = root.querySelector('.hud'), reasons = root.querySelector('.reason');
@@ -130,6 +130,16 @@
     if (options.some(option => !option.text) || new Set(options.map(option => option.text)).size !== options.length) return;
     return [{ question, selectionMode: 'single', options }];
   }
+  // Options with no text (pictures of equations, diagrams) cannot be matched by text. Use the radio button
+  // whose option row contains the centre of the AI's estimated box; with none, the ring stays at that estimate.
+  function radioAt(predicted) {
+    const cx = predicted.x + predicted.w / 2, cy = predicted.y + predicted.h / 2;
+    return [...document.querySelectorAll('input[type="radio"],[role="radio"]')].map(radio => {
+      const row = radio.closest('label,[role="option"],.option,.answer-option,[data-option],li') || radio.parentElement;
+      return { radio, row, rect: row.getBoundingClientRect() };
+    }).filter(({ radio, rect }) => radio.getBoundingClientRect().width && rect.top <= cy && rect.bottom >= cy && rect.left <= cx && rect.right >= predicted.x)
+      .sort((a, b) => a.rect.height * a.rect.width - b.rect.height * b.rect.width)[0] || null;
+  }
   function render(questions, area, origin) {
     clear();
     let count = 0;
@@ -154,8 +164,9 @@
         }).sort((a, b) => a.distance - b.distance);
         const box = document.createElement('div');
         box.className = `box${q.confidence === 'high' ? '' : ' low'}`;
-        const target = matches[0]?.element;
-        const radio = target && (target.matches('input[type="radio"],[role="radio"]') ? target : target.querySelector('input[type="radio"],[role="radio"]'));
+        const snapped = matches.length ? null : radioAt(predicted);
+        const target = matches[0]?.element || snapped?.row;
+        const radio = snapped?.radio || (target && (target.matches('input[type="radio"],[role="radio"]') ? target : target.querySelector('input[type="radio"],[role="radio"]')));
         placed.push({ box, target, radio, x: predicted.x + origin.x, y: predicted.y + origin.y, w: predicted.w, h: predicted.h });
         box.title = q.confidence === 'high' ? 'Suggested answer' : `Suggested answer (${q.confidence} confidence)`;
         marks.append(box); count++;
@@ -275,16 +286,19 @@
     reposition();
     if (location.href !== answered.url || docText() !== answered.text) schedule(250);
   }, 500);
+  // The ring colour chosen in Settings; none means the default green for the page's light or dark theme.
+  const setRing = color => { if (/^#[0-9a-f]{6}$/i.test(color || '')) host.style.setProperty('--ring', color); else host.style.removeProperty('--ring'); };
   chrome.runtime.onMessage.addListener((message, sender, reply) => {
     if (message.type === 'STATE') reply({ enabled, status, cropped: Boolean(crop) });
     if (message.type === 'TOGGLE') {
       if (message.enabled) {
-        enabled = true; interval = Math.min(60, Math.max(6, Number(message.interval) || 10)) * 1000;
+        enabled = true; interval = Math.min(60, Math.max(6, Number(message.interval) || 10)) * 1000; setRing(message.ringColor);
         invalidate(); retryAt = 0; document.documentElement.append(host); hud.hidden = true; setStatus('Watching this tab. Scanning…'); schedule(300);
         log('enabled', `check every ${interval / 1000}s`);
       } else stop();
       reply({ enabled, status });
     }
+    if (message.type === 'RING') { setRing(message.color); reply({ ok: true }); }
     if (message.type === 'AREA') { chooseArea(); reply({ ok: true }); }
     if (message.type === 'FULL') { crop = null; invalidate(); setStatus('Watching the full visible screen.'); schedule(200); reply({ ok: true }); }
     if (message.type === 'REPORT_FORM') { if (enabled) openReport(); reply({ ok: enabled }); }

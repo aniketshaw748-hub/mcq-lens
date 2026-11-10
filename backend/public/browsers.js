@@ -13,7 +13,7 @@ const chromium = (name, page, toggle) => ({
 });
 export const browsers = {
   chrome: chromium('Chrome', 'chrome://extensions', 'top right'),
-  edge: { ...chromium('Edge', 'edge://extensions', 'in the left menu; on a narrow window open the ☰ menu first'), lead: 'MCQ Lens is in review for the Edge Add-ons store. Until it’s listed, install it like this.' },
+  edge: { ...chromium('Edge', 'edge://extensions', 'in the left menu; on a narrow window open the ☰ menu first'), lead: 'Easiest: <a href="https://microsoftedge.microsoft.com/addons/detail/ihjfepjjhndaabbnamhmdncjajnngpdf">get MCQ Lens from Edge Add-ons</a>. Store updates arrive a few days after each release; for the newest version, install the zip like this.' },
   brave: chromium('Brave', 'brave://extensions', 'top right'),
   opera: chromium('Opera', 'opera://extensions', 'top right'),
   firefox: {

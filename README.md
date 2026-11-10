@@ -22,7 +22,7 @@ Keep the extracted folder: Chrome loads the extension from it, so deleting or mo
 
 ### Microsoft Edge
 
-MCQ Lens is in review for the Edge Add-ons store. Until it's listed:
+Install from the [Edge Add-ons store](https://microsoftedge.microsoft.com/addons/detail/ihjfepjjhndaabbnamhmdncjajnngpdf). The store can be a few versions behind; for the newest version:
 
 1. Download **MCQ-Lens-chrome-edge.zip** and extract it.
 2. Go to `edge://extensions` and switch on **Developer mode** (left side).
@@ -42,7 +42,7 @@ Firefox removes add-ons loaded this way when it closes, so repeat these steps af
 
 1. Open a page with a multiple-choice question.
 2. Click the **MCQ Lens** icon → **Enable on this tab**.
-3. A small ring circles the suggested option's radio button, so you can still see your own choice inside it. Press **Alt+Shift+Y** on the page to see the reasoning (change the shortcut at `chrome://extensions/shortcuts`). The toolbar icon shows ✓ when answered and ! when something needs attention. Go to the next question and it answers again automatically.
+3. A small ring circles the suggested option's radio button, so you can still see your own choice inside it. A dashed ring means the AI is less sure. Pick the ring colour in **Settings**. Press **Alt+Shift+Y** on the page to see the reasoning (change the shortcut at `chrome://extensions/shortcuts`). The toolbar icon shows ✓ when answered and ! when something needs attention. Go to the next question and it answers again automatically.
 
 Try it on the test page: https://mcq-lens.pages.dev/test. Answers come from AI and can be wrong. MCQ Lens never clicks or submits anything for you. Follow your school's or test platform's rules.
 
@@ -68,7 +68,7 @@ Provider keys live in Cloudflare Worker secrets and the local ignored backend/.d
 
 While enabled, readable question/option text goes to the owner's server and its text model. If the extension cannot reliably extract a complete question, screenshot crops go to the server and its configured vision provider (Gemini, Groq or Z.ai). Own keys from Settings are sent as request headers to the server, used for that request only and never stored there. Crop out personal data. The application processes raw screenshots in memory. Answers may be cached for 24 hours, or 5 minutes for search-backed answers. Provider-side processing follows provider terms, including free-tier terms. The extension stores a random install ID and any own keys locally in the Chrome profile, not Chrome Sync.
 
-Green marks a high-confidence AI suggestion; amber marks uncertainty. Confidence is the model's subjective judgment. The panel gives the option text and explanation. Highlight placement uses the actual page option when its text matches the answer. For image-only questions, boxes depend on the model's estimated coordinates and can be imprecise. All question text and options must be readable and visible. Answers can be wrong.
+A solid ring marks a high-confidence AI suggestion; a dashed ring marks uncertainty. Confidence is the model's subjective judgment. The panel gives the option text and explanation. Highlight placement uses the actual page option when its text matches the answer. For image-only questions, boxes depend on the model's estimated coordinates and can be imprecise. All question text and options must be readable and visible. Answers can be wrong.
 
 Protected Chrome pages, the Web Store and the built-in PDF viewer do not support injection. The extension requests temporary active-tab access, scripting and local storage. A student connection adds permission for only that service origin. Optional host declarations allow you to choose the service, not always-on access to every website.
 

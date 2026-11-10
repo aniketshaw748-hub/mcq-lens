@@ -31,6 +31,12 @@ try {
   await page.locator('#interval-status').filter({ hasText: 'Saved.' }).waitFor();
   const settings = await page.evaluate(() => chrome.storage.local.get(['groqKey', 'geminiKey', 'interval']));
   assert.equal(settings.groqKey, 'gsk_test-key-not-real'); assert.equal(settings.geminiKey, undefined); assert.equal(settings.interval, 8);
+  await page.locator('.swatch[aria-label="Blue"]').click();
+  await page.locator('#ring-status').filter({ hasText: 'Saved.' }).waitFor();
+  assert.equal((await page.evaluate(() => chrome.storage.local.get('ringColor'))).ringColor, '#2563eb');
+  assert.equal(await page.locator('.swatch[aria-label="Blue"]').getAttribute('aria-pressed'), 'true');
+  await page.locator('.swatch[aria-label="Green (default)"]').click();
+  await page.waitForFunction(async () => (await chrome.storage.local.get('ringColor')).ringColor === '');
   await page.getByRole('button', { name: 'Show keys' }).click();
   assert.equal(await page.locator('#groq').getAttribute('type'), 'text');
   await page.screenshot({ path: path.join(extension, 'test-results/settings.png'), fullPage: true });

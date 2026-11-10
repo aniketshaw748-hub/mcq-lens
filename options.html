@@ -16,6 +16,21 @@
 </form>
 
 <section class="section">
+  <h2>Ring colour</h2>
+  <p>The ring that marks the suggested option. A dashed ring means the AI is less sure.</p>
+  <div class="swatches" role="group" aria-label="Ring colour">
+    <button type="button" class="swatch" data-color="" aria-label="Green (default)" style="--c:#1f9d55"></button>
+    <button type="button" class="swatch" data-color="#2563eb" aria-label="Blue" style="--c:#2563eb"></button>
+    <button type="button" class="swatch" data-color="#7c3aed" aria-label="Purple" style="--c:#7c3aed"></button>
+    <button type="button" class="swatch" data-color="#db2777" aria-label="Pink" style="--c:#db2777"></button>
+    <button type="button" class="swatch" data-color="#ea580c" aria-label="Orange" style="--c:#ea580c"></button>
+    <button type="button" class="swatch" data-color="#737373" aria-label="Grey" style="--c:#737373"></button>
+    <label class="swatch custom" title="Any colour"><span class="sr-only">Any colour</span><input id="ring-custom" type="color" value="#1f9d55"></label>
+  </div>
+  <p id="ring-status" role="status"></p>
+</section>
+
+<section class="section">
   <h2>Check interval</h2>
   <label for="interval">Check for changes every (seconds)</label><input id="interval" type="number" min="6" max="60" value="10">
   <p id="interval-status" role="status"></p>
