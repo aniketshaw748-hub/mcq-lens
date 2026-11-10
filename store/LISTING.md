@@ -49,7 +49,7 @@ Important: answers come from AI models (Groq, Google Gemini or Z.ai through the 
 No account or login is needed. Test page with practice questions: https://mcq-lens.pages.dev/test
 1. Install the extension and open https://mcq-lens.pages.dev/test
 2. Click the MCQ Lens toolbar button, then "Enable on this tab".
-3. Within a few seconds a green dot marks the suggested option and the toolbar icon shows a check mark. Press Alt+Shift+Y on the page to show the explanation.
+3. Within a few seconds a green ring circles the suggested option and the toolbar icon shows a check mark. Press Alt+Shift+Y on the page to show the explanation.
 4. Click "Next question" on the page: the highlight clears and the new question is answered automatically.
 5. Settings (toolbar popup → "Settings") shows the optional API-key fields; they are not needed for testing.
 6. "Report a problem" in the toolbar popup opens a short form on the page that sends a bug report (a note, and a screenshot of the question area only if ticked). Automatic error reports contain no question text and can be switched off in Settings.

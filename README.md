@@ -42,7 +42,7 @@ Firefox removes add-ons loaded this way when it closes, so repeat these steps af
 
 1. Open a page with a multiple-choice question.
 2. Click the **MCQ Lens** icon → **Enable on this tab**.
-3. A small dot marks the suggested option. Press **Alt+Shift+Y** on the page to see the reasoning (change the shortcut at `chrome://extensions/shortcuts`). The toolbar icon shows ✓ when answered and ! when something needs attention. Go to the next question and it answers again automatically.
+3. A small ring circles the suggested option's radio button, so you can still see your own choice inside it. Press **Alt+Shift+Y** on the page to see the reasoning (change the shortcut at `chrome://extensions/shortcuts`). The toolbar icon shows ✓ when answered and ! when something needs attention. Go to the next question and it answers again automatically.
 
 Try it on the test page: https://mcq-lens.pages.dev/test. Answers come from AI and can be wrong. MCQ Lens never clicks or submits anything for you. Follow your school's or test platform's rules.
 
@@ -54,7 +54,7 @@ Website: https://mcq-lens.pages.dev (landing page and download), https://mcq-len
 
 The extension uses the owner's shared AI service. It works straight after install: no access link, account or API key. Settings has an optional place for a user's own Groq, Gemini or Z.ai keys; with any of them, that user's questions run on their keys only, with no MCQ Lens daily cap.
 
-Only enabled tabs are scanned. Hidden tabs and unfocused windows pause. Reloading or navigating switches scanning off. Scrolling moves highlights with their options; a screenshot question is re-read only after scrolling more than half a screen. Resizing resets the selected area. The shared service reads complete radio-button questions directly from visible page text when possible, including code and all options. This skips the vision provider. Other layouts and image/canvas questions use screenshot reading. Requests are sent only when the selected image changes. Timers and animations may cause extra scans, so keep them outside the selected area. The interval defaults to 10 seconds and is configurable from 6–60 seconds.
+Only enabled tabs are scanned. Window focus doesn't matter: it keeps working while you use another window or app. A screenshot question is read only while its tab is on screen; switching tabs keeps the current answer. Reloading or navigating switches scanning off. Scrolling moves highlights with their options; a screenshot question is re-read only after scrolling more than half a screen. Resizing resets the selected area. The shared service reads complete radio-button questions directly from visible page text when possible, including code and all options. This skips the vision provider. Other layouts and image/canvas questions use screenshot reading. Requests are sent only when the selected image changes. Timers and animations may cause extra scans, so keep them outside the selected area. The interval defaults to 10 seconds and is configurable from 6–60 seconds.
 
 The shared service permits 50 successful questions per student per UTC day. Every answered changed screenshot counts, including a cached answer. Failed answers refund the daily allowance. Availability depends on the providers' free quotas; the allowance is not a guarantee that all questions can be answered immediately. The extension never clicks or submits answers.
 

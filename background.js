@@ -42,10 +42,11 @@ chrome.commands.onCommand.addListener(async (command, tab) => {
   if (id) chrome.tabs.sendMessage(id, { type: 'PANEL' }).catch(() => {});
 });
 
-async function active(tabId, windowId) {
+// A screenshot shows whichever tab is on screen in that window, so capture only when it is this tab.
+// Window focus does not matter: a window beside another app, or behind DevTools, still shows the tab.
+async function visible(tabId, windowId) {
   const [tab] = await chrome.tabs.query({ active: true, windowId });
-  const window = await chrome.windows.get(windowId);
-  return tab?.id === tabId && window.focused;
+  return tab?.id === tabId;
 }
 
 async function handle(message, sender) {
@@ -56,10 +57,10 @@ async function handle(message, sender) {
     jobs.get(tab.id)?.abort(); jobs.delete(tab.id); badge(tab.id, 'off'); return { ok: true };
   }
   if (!['CAPTURE', 'SOLVE'].includes(message.type)) return;
-  if (!await active(tab.id, tab.windowId)) return { paused: true };
   if (message.type === 'CAPTURE') {
+    if (!await visible(tab.id, tab.windowId)) return { paused: true };
     const image = await chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' });
-    if (!await active(tab.id, tab.windowId)) return { paused: true };
+    if (!await visible(tab.id, tab.windowId)) return { paused: true };
     return { image };
   }
   if (typeof message.image !== 'string' || message.image.length > 12000000) throw new Error('Invalid screenshot.');

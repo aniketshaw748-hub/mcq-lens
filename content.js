@@ -17,7 +17,7 @@
     button{font:500 12px/1 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;border:1px solid var(--line);background:transparent;border-radius:6px;padding:7px 10px;cursor:pointer;color:var(--text)}button:hover{border-color:var(--muted)}button:focus-visible{outline:2px solid var(--text);outline-offset:2px}
     #hide{display:grid;place-items:center;border:0;padding:4px;border-radius:6px;color:var(--muted)}#hide:hover{color:var(--text);background:color-mix(in srgb,var(--text) 6%,transparent)}
     .report{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}.report textarea{box-sizing:border-box;width:100%;min-height:64px;font:12.5px/1.5 'Segoe UI',system-ui,sans-serif;color:var(--text);background:transparent;border:1px solid var(--line);border-radius:8px;padding:8px;resize:vertical}.report textarea:focus{outline:none;border-color:var(--muted)}.report label{display:flex;gap:8px;align-items:center;font-size:12px;margin:8px 0;color:var(--muted)}.report .buttons{display:flex;gap:6px}#send{background:var(--text);border-color:var(--text);color:var(--bg)}
-    .box{position:fixed;box-sizing:border-box;border-radius:50%;background:var(--mark);box-shadow:0 0 0 3px color-mix(in srgb,var(--mark) 25%,transparent);pointer-events:none}.box.low{background:var(--warn);box-shadow:0 0 0 3px color-mix(in srgb,var(--warn) 25%,transparent)}
+    .box{position:fixed;box-sizing:border-box;border-radius:50%;border:2.5px solid var(--mark);background:transparent;box-shadow:0 0 0 3px color-mix(in srgb,var(--mark) 20%,transparent);pointer-events:none}.box.low{border-color:var(--warn);box-shadow:0 0 0 3px color-mix(in srgb,var(--warn) 20%,transparent)}
     .region{position:fixed;box-sizing:border-box;border:1.5px dashed var(--mark);border-radius:8px;pointer-events:none}.veil{position:fixed;inset:0;pointer-events:auto;cursor:crosshair;background:rgba(0,0,0,.3);touch-action:none}.selection{position:fixed;border:2px solid #fff;border-radius:6px;background:rgba(255,255,255,.1);pointer-events:none}.hint{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:var(--bg);color:var(--text);border:1px solid var(--line);padding:10px 16px;border-radius:10px;font:13px 'Segoe UI',system-ui,sans-serif;pointer-events:none}
   </style><div id="marks"></div><div class="hud" hidden><div class="top"><span class="name">MCQ Lens</span><button id="hide" aria-label="Hide the reasoning" title="Hide (Alt+Shift+Y)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg></button></div><div class="status" role="status"></div><div class="reason"></div><form class="report" hidden><textarea id="note" maxlength="2000" placeholder="What went wrong? (no personal details)"></textarea><label><input id="shot" type="checkbox"> Include a screenshot of the question area</label><div class="buttons"><button id="send" type="submit">Send report</button><button id="cancel" type="button">Cancel</button></div></form></div>`;
   const marks = root.querySelector('#marks'), hud = root.querySelector('.hud'), reasons = root.querySelector('.reason');
@@ -34,12 +34,13 @@
   const docText = () => (document.body || document.documentElement).innerText.slice(0, 200000);
   const questionKey = questions => JSON.stringify(questions.map(q => [q.question, q.options.map(o => o.text)]));
   // Highlights follow their option on the page (or their page position) instead of forcing a re-read.
-  // The mark is one dot: over the option's own radio button when it has one, else at the option's left edge.
+  // The mark is one ring: around the option's own radio button when it has one, else at the option's left edge.
   function reposition() {
     for (const mark of placed) {
       const radio = mark.radio?.isConnected && mark.radio.getBoundingClientRect();
       const r = radio && radio.width ? radio : mark.target?.isConnected ? mark.target.getBoundingClientRect() : { left: mark.x - scrollX, top: mark.y - scrollY, width: mark.w, height: mark.h };
-      const size = radio && radio.width ? Math.max(radio.width, radio.height) + 6 : 18;
+      // A ring with a clear centre, so the user's own selection in the radio stays visible.
+      const size = radio && radio.width ? Math.max(radio.width, radio.height) + 10 : 18;
       const x = radio && radio.width ? r.left + r.width / 2 : r.left + 16, y = r.top + r.height / 2;
       mark.box.style.cssText = `left:${x - size / 2}px;top:${y - size / 2}px;width:${size}px;height:${size}px`;
     }
@@ -166,8 +167,6 @@
   }
   async function scan() {
     if (!enabled || busy || selecting) return;
-    // A hidden tab keeps its highlight; it is checked again when the tab is back.
-    if (document.hidden) { setStatus('Paused while this tab is hidden.'); schedule(); return; }
     if (Date.now() < retryAt) { schedule(retryAt - Date.now()); return; }
     busy = true;
     let delay = interval;
@@ -184,7 +183,8 @@
       if (!key) {
         shot = await snapshot();
         if (!enabled || version !== generation) return;
-        if (shot.paused) { setStatus('Paused. Bring this tab and window to the foreground.'); log('paused', 'capture: window not focused'); return; }
+        // A tab that is not on screen cannot be photographed: keep the current answer and try again later, quietly.
+        if (shot.paused) { log('waiting', 'capture: tab not on screen'); return; }
         if (shot.error) throw Object.assign(new Error(shot.error), { stage: 'capture' });
         // Image or canvas questions: unchanged pixels at the same scroll position mean the same question.
         if (answered && !answered.key && answered.url === url && shift === 0 && same(answered.pixels, shot.pixels)) { answered.text = text; setStatus(answered.status); log('same-question', 'pixels'); return; }
@@ -194,7 +194,6 @@
       log('ask', key ? `page text, ${extracted[0].options.length} options` : `screenshot ${Math.round(area.w)}x${Math.round(area.h)}${crop ? ' (area)' : ''}`);
       const response = await send({ type: 'SOLVE', image: shot?.image || '', extractedQuestions: extracted });
       if (!enabled || version !== generation) return;
-      if (response.paused) { setStatus('Paused. Bring this tab and window to the foreground.'); log('paused', 'answer: window not focused'); return; }
       if (response.error) {
         retryAt = Date.now() + (response.retryMs || 10000); setStatus(response.error);
         log('error', `${response.stage || 'service'}/${response.reason || response.status || '-'} after ${Date.now() - asked} ms`);
@@ -272,7 +271,7 @@
   document.addEventListener('visibilitychange', () => { if (enabled && !document.hidden) schedule(300); });
   // Check locally every 500ms whether the page text changed; scan() then decides if the question did.
   setInterval(() => {
-    if (!enabled || busy || selecting || !answered || document.hidden) return;
+    if (!enabled || busy || selecting || !answered) return;
     reposition();
     if (location.href !== answered.url || docText() !== answered.text) schedule(250);
   }, 500);

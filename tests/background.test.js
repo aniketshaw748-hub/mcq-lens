@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-test('background restricts capture to the active focused tab, needs no setup, and throttles requests', async () => {
+test('background captures only the tab on screen (focus not needed), needs no setup, and throttles requests', async () => {
   let listener, focused = true, currentTab = 17, captures = 0, fetches = 0, stored = {};
   const originalFetch = globalThis.fetch;
   globalThis.self = { addEventListener: () => {} };
@@ -20,10 +20,11 @@ test('background restricts capture to the active focused tab, needs no setup, an
     assert.deepEqual(await send({ type: 'CAPTURE' }), { image: 'data:image/png;base64,test' });
     assert.equal(captures, 1);
     focused = false;
+    assert.deepEqual(await send({ type: 'CAPTURE' }), { image: 'data:image/png;base64,test' });
+    assert.equal(captures, 2);
+    currentTab = 18;
     assert.deepEqual(await send({ type: 'CAPTURE' }), { paused: true });
-    assert.equal(captures, 1);
-    focused = true; currentTab = 18;
-    assert.deepEqual(await send({ type: 'CAPTURE' }), { paused: true });
+    assert.equal(captures, 2);
     currentTab = 17;
     assert.match((await send({ type: 'CAPTURE' }, { tab: { id: 17, windowId: 1 }, frameId: 2 })).error, /enabled tab/);
     // No link or key needed: the first solve creates an install ID.

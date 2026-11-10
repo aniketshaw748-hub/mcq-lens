@@ -61,12 +61,13 @@ try {
   assert.equal(await boxCount(), 1); assert.ok(await dotOnRadio(), 'the dot stays on the option’s radio button');
   console.log('PASS scrolling moves the highlight with its option and does not re-read');
   await page.evaluate(() => scrollTo(0, 0)); await page.waitForTimeout(500);
-  await page.evaluate(() => { window.unfocused = true; });
-  await waitStatus('Paused'); assert.equal(await boxCount(), 1);
+  await page.evaluate(() => { window.capturesBefore = window.calls.filter(x => x === 'CAPTURE').length; window.unfocused = true; });
+  await page.waitForFunction(() => window.calls.filter(x => x === 'CAPTURE').length > window.capturesBefore + 1);
+  assert.equal(await boxCount(), 1);
+  assert.match(await page.evaluate(() => window.testRoots[0].querySelector('.status').textContent), /1 suggested/, 'no pause message while the tab is off screen');
   await page.evaluate(() => { window.unfocused = false; });
-  await waitStatus('1 suggested');
   assert.equal(await page.evaluate(() => window.calls.filter(x => x === 'SOLVE').length), initialRequests);
-  console.log('PASS clicking out of the window keeps the highlight and does not re-read on return');
+  console.log('PASS an off-screen tab keeps its highlight quietly and does not re-read on return');
 
   await page.evaluate(() => { document.querySelector('#q').textContent = 'What is the capital of France?'; document.querySelectorAll('label').forEach((label, i) => { label.lastChild.textContent = [' London', ' Paris', ' Rome', ' Berlin'][i]; }); });
   await page.waitForFunction(() => window.testRoots[0].querySelector('.reason').textContent.includes('Paris'));
