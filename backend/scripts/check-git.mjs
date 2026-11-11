@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
 const root = new URL('../../', import.meta.url);
-const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8', windowsHide: true });
+const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8', windowsHide: true, maxBuffer: 64 * 1024 * 1024 });
 const secrets = readFileSync(new URL('../.dev.vars', import.meta.url), 'utf8').split(/\r?\n/).filter(line => /^[A-Z_]+=/.test(line)).map(line => line.slice(line.indexOf('=') + 1).trim()).filter(value => value.length >= 12);
 const files = git(['diff', '--cached', '--name-only', '--diff-filter=ACMR']).trim().split('\n').filter(Boolean);
 const unsafe = [];
