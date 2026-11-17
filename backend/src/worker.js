@@ -43,7 +43,8 @@ async function bodyJSON(request) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
+    // The public site lives on Pages; the Worker's own workers.dev address only serves the API, so search engines see one copy.
+    if (!url.pathname.startsWith('/api/')) return url.hostname.endsWith('.workers.dev') && env.SITE_ORIGIN ? Response.redirect(env.SITE_ORIGIN + url.pathname + url.search, 301) : env.ASSETS.fetch(request);
     const origin = request.headers.get('origin');
     const extensionOrigin = /^(chrome-extension:\/\/[a-p]{32}|moz-extension:\/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/.test(origin || '');
     const allowed = !origin || origin === url.origin || extensionOrigin || (env.ALLOWED_ORIGINS || '').split(',').includes(origin);
